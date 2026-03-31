@@ -64,10 +64,9 @@ h2 {
 }
 
 .vp-hero-info {
-  display: block;
-  text-align: center;
-
+  margin-top: 100px;
   .vp-hero-image {
+    max-width: 500px;
     max-height: 150px;
     margin: 0 auto;
   }

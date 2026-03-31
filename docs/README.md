@@ -10,7 +10,6 @@ actions:
   - text: 文档
     link: /doc.html
     type: primary
-
   - text: Github
     link: https://github.com/henhen6/mdp
   - text: Gitee
