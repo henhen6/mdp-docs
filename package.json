@@ -15,6 +15,7 @@
     "@mdit/plugin-container": "0.16.0",
     "@vuepress/bundler-vite": "2.0.0-rc.20",
     "@vuepress/plugin-docsearch": "2.0.0-rc.82",
+    "@vuepress/highlighter-helper": "2.0.0-rc.127",
     "chart.js": "^4.4.8",
     "sass": "^1.85.1",
     "vidstack": "^1.12.13",

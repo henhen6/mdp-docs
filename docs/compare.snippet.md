@@ -31,9 +31,8 @@
 - [x] 分布式定时任务
 - [x] 分布式定时任务
 - [x] 学习和个人使用免费，不支持商用。
-- [x] [更多...](./guide/features/)
 
-<button class="buyBtn" onclick="window.open('/buy')">购买</button>
+<button class="buyBtn" onclick="window.open('https://github.com/henhen6/mdp')">下载源码</button>
 </div>
 
 <div class="hint-container tip" style="margin-left:15px;width:50%">
@@ -53,6 +52,7 @@
 - [x] 支持商用，不限项目数量、域名数量、无license、不含加密jar。
 - [x] 微信互助群
 
+<button class="buyBtn" onclick="window.open('/buy/')">购买</button>
 </div>
 </div>
 

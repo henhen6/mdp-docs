@@ -43,38 +43,6 @@ export default defineUserConfig({
       gtag('config', 'G-Y8G30ZWCYE');
     `,
     ],
-    ["script", { src: "https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.6/libs/cn/index.js" ,async: true}],
-    ["script", {}, `
-       (function() {
-         if(location.href.indexOf('api-buddy.cn') > -1 || location.href.indexOf('localhost') > -1  ){
-           const script = document.createElement('script');
-           script.src = 'https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.6/libs/cn/index.js';
-           script.onload = function() {
-             new CozeWebSDK.WebChatClient({
-               config: {
-                 bot_id: '7490948972094963746',
-               },
-               componentProps: {
-                 title: 'FastRequest智能问答助手',
-                 icon: 'https://api-buddy.cn/img/aiRobot.svg',
-                 uploadable: false,
-               },
-               auth: {
-                 type: 'token',
-                 token: 'pat_7svIAdX7zHjgnWMS4Y1EbeZCvCXEhKoqnF0DbZyCyhHFR7tWcWy0wEJSnC1wKx7M',
-                 onRefreshToken: function () {
-                   return 'pat_7svIAdX7zHjgnWMS4Y1EbeZCvCXEhKoqnF0DbZyCyhHFR7tWcWy0wEJSnC1wKx7M'
-                 }
-               }
-             });
-           };
-           document.head.appendChild(script);
-         }
-       })();
-     `],
-
-
-    // ["script", { src: "https://cdn.wwads.cn/js/makemoney.js" }],
   ],
 
   locales: {

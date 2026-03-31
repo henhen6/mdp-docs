@@ -5,10 +5,10 @@ title: 主页
 heroImage: /img/logo.png
 heroFullScreen: false
 heroText: 主数据平台
-tagline: 单点登录、开放平台解决方案。
+tagline: 一套集单点登录、管理后台、开放平台的后台管理系统解决方案。
 actions:
   - text: 文档
-    link: /doc.html
+    link: /doc/
     type: primary
   - text: Github
     link: https://github.com/henhen6/mdp
@@ -58,9 +58,7 @@ footer: Apache-2.0 license | Copyright ©2026-至今 | 作者：henhen6 | <a hre
 
 ## 🌈 赞助商
 
-1. [**赞助可以为您带来什么(必看)**](./guide/sponsor.md#优势)
-
-2. [成为赞助者](./guide/sponsor.md)
+[成为赞助者](./buy/sponsor.md)
 
 <SiteInfo
 name="灯灯"
@@ -70,7 +68,7 @@ preview="/img/sponsor/lamp-home.png"
 style="max-width:370px"
 />
 
-## 优势
+## 主要功能
 
 <div class="home-advantage">
   <div style="border-radius: 10px;overflow: hidden">
@@ -86,10 +84,9 @@ style="max-width:370px"
     />
   </div>
   <div style="margin-top: 20px"></div>
-  <a class="advantage-more" href="guide/features/">更多功能</a>
 </div>
 
-## 🥇 功能
+## 🥇 版本对比
 
 <!-- @include: @src/compare.snippet.md -->
 

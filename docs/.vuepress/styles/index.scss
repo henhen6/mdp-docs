@@ -1,4 +1,65 @@
 @use "@sass-palette/hope-config";
+@use "@vuepress/highlighter-helper/scss/code-title-icon";
+@use "vuepress-theme-hope/presets/shinning-feature-panel";
+
+:root {
+  --bg-2: url("https://theme-hope-assets.vuejs.press/bg/2-light.svg");
+  --bg-9: url("https://theme-hope-assets.vuejs.press/bg/9-light.svg") no-repeat center/cover;
+  --bg-10: url("https://theme-hope-assets.vuejs.press/bg/10-light.svg") no-repeat center/cover;
+  --bg-10-inverse: url("https://theme-hope-assets.vuejs.press/bg/10-dark.svg") no-repeat
+  center/cover;
+}
+
+[data-theme="dark"] {
+  --bg-2: url("https://theme-hope-assets.vuejs.press/bg/2-dark.svg");
+  --bg-9: url("https://theme-hope-assets.vuejs.press/bg/9-dark.svg") no-repeat center/cover;
+  --bg-10: url("https://theme-hope-assets.vuejs.press/bg/10-dark.svg") no-repeat center/cover;
+  --bg-10-inverse: url("https://theme-hope-assets.vuejs.press/bg/10-light.svg") no-repeat
+  center/cover;
+}
+
+.catalog-display-container {
+  overflow: visible auto;
+
+  max-height: 75vh;
+  margin: 0.5rem;
+  border-radius: 0.5rem;
+
+  overflow-wrap: break-word;
+}
+
+@include code-title-icon.style(
+  (
+          title: ".vuepress/config.ts",
+          match: "equals",
+          icon: "https://ecosystem.vuejs.press/images/hero.png",
+  ),
+  (
+          title: ".vuepress/client.ts",
+          match: "equals",
+          icon: "https://ecosystem.vuejs.press/images/hero.png",
+  ),
+  (
+          title: ".vuepress/theme.ts",
+          match: "equals",
+          icon: "https://theme-hope-assets.vuejs.press/logo.svg",
+  ),
+  (
+          title: ".scss",
+          match: "endsWith",
+          icon: "https://sass-lang.com/assets/img/logos/logo.svg",
+  ),
+  (
+          title: ".md",
+          match: "endsWith",
+          icon: "https://theme-hope.vuejs.press/assets/image/markdown.svg",
+  ),
+  (
+          title: ".vue",
+          match: "endsWith",
+          icon: "https://theme-hope.vuejs.press/assets/image/vue.svg",
+  )
+);
 
 @font-face {
   font-family: "alimamaYuanMainTitle";

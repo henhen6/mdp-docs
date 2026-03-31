@@ -1,11 +1,11 @@
 ---
-title: 文档
+title: 常见问题
 icon: wendang
 index: false
 category:
-  - 文档
+  - 常见问题
 tag:
-  - 文档
+  - 常见问题
 ---
 
 <AutoCatalog />

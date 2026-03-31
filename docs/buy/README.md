@@ -1,11 +1,11 @@
 ---
-title: 文档
+title: 配置
 icon: wendang
 index: false
 category:
-  - 文档
+  - 配置
 tag:
-  - 文档
+  - 配置
 ---
 
 <AutoCatalog />
