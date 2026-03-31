@@ -2,12 +2,12 @@ import { navbar } from "vuepress-theme-hope";
 export const zhNavbar = navbar([
   {
     text: "文档",
-    link: "/guide/doc",
+    link: "/doc/简介",
     icon: "start1",
   },
   {
     text: "配置",
-    link: "/guide/config",
+    link: "/config",
     icon: "featuresNew",
   },
   {
@@ -27,15 +27,15 @@ export const zhNavbar = navbar([
   },
   {
     text: "升级日志",
-    link: "/guide/upgrade",
+    link: "/upgrade",
   },
   {
     text: "历史文档",
     icon: "team",
-    link: "/guide/history",
+    link: "/history",
   },
   {
     text: "常见问题",
-    link: "/guide/faq",
+    link: "/faq",
   }
 ]);

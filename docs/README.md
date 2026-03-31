@@ -1,60 +1,61 @@
 ---
 icon: restfulFastRequest
 home: true
-title: Api Buddy
-heroFullScreen: true
-heroImageDark: /img/fastRequest.svg
-bgImage: /img/bg4.svg
-heroText: Fast Request
-tagline: 为简化调试API而生
+title: 主页
+heroImage: /img/logo.png
+heroFullScreen: false
+heroText: 主数据平台
+tagline: 单点登录、开放平台解决方案。
 actions:
-  - text: 快速上手
-    link: /guide/getstarted/start.html
+  - text: 文档
+    link: /doc.html
     type: primary
 
+  - text: Github
+    link: https://github.com/henhen6/mdp
+  - text: Gitee
+    link: https://gitee.com/henhen6/mdp
+  - text: Gitcode
+    link: https://gitcode.com/henhen6/mdp
+    
+
 features:
-  - title: 基于原生
+  - title: 主流的技术
     icon: origin
-    details: 集成 IDEA 工具，在线离线均可使用，不再需要额外的诸如 Postman 等 API 调试工具
-    link: /guide/introduce.html
+    details: vue3、jdk8、jdk17、jdk21、SpringBoot、SpringCloud、mybatis-flex、sa-token、hutool等主流版本
 
-  - title: 效率至上
+  - title: 代码规范
     icon: effective
-    details: 只需要简单配置即可生成方法的 API 请求，从而节省大量时间
-    link: /guide/getstarted/start.html
+    details: 代码简洁规范，结构合理清晰，完全按照 maven-checkstyle-plugin 配置的规范编写代码。
 
-  - title: 功能丰富
+  - title: 双架构支持
     icon: features
-    details: 一键生成 URL 和参数、脚本、SearchEveryWhere 搜索、API 导出到 Postman、发送 API 请求、下载文件、存储历史请求，各种功能一应俱全
-    link: /guide/features/
+    details: 一套代码同时支持微服务和单体两种架构，一套代码同时支持不同的项目、运行和部署环境。
 
-  - title: 轻量、界面友好
+  - title: 丰富的功能
     icon: code-box-fill
-    details: 轻量，仅 20M 大小，并且提供一个非常直观的界面，好操作易上手
-    link: /guide/install.html
+    details: 单点登录中心、开放平台、管理后台。
 
 head:
   - - meta
     - name: keywords
-      content: API Buddy,Fast Request,RestfulFastRequest,fast request官网,api-buddy,Restful Fast Request,Fast Request激活码
+      content: 单点登录中心、开放平台、开发者平台、基础管理平台、脚手架、基础框架、SpringBoot框架、SpringCloud框架。
   - - meta
     - name: description
-      content: Restful Fast Request是一个IntelliJ IDEA上的的类似postman的restful api工具插件，可以根据已有的方法帮助您快速生成url和params，一个API调试工具+API管理工具，支持springmvc、springboot、java-rs
+      content: Mdp是一个开放平台、开发者平台、单点登录中心、基础管理平台。包含：单点登录、Oauth2 登录、用户身份管理、应用申请、应用接入、主数据维护、主数据订阅、主数据广播、应用接口调用、接口管理管理和查看、系统配置等功能。
   - - meta
     - name: wwads-cn-verify
-      content: 2f2b265625d76a6704b08093c652fd79
-
+      content: 1
   - - meta
     - name: baidu-site-verification
-      content: codeva-CrZ94MmST2
+      content: 2
+
+copyright: false
+footer: Apache-2.0 license | Copyright ©2026-至今 | 作者：henhen6 | <a href="http://beian.miit.gov.cn/" target="_blank"><img src="/img/global/gongan.png"><span>黔ICP备2021004749号-3</span></a>
 ---
 
 <div style="margin-top: 30px;"></div>
 
-[![Twitter](https://img.shields.io/static/v1?label=Twitter&message=FastRequest666&logo=twitter&color=FC8D34)](https://twitter.com/FastRequest666)
-[![github](https://badgen.net/badge/Github/fast-request/21D789?icon=github)](https://github.com/dromara/fast-request) [![Jetbrains Plugins][plugin-img]][plugin] ![Version](https://img.shields.io/jetbrains/plugin/v/16988?logo=IntelliJ%20IDEA) ![Downloads](https://img.shields.io/jetbrains/plugin/d/16988?color=FE2857)
-
-<div style="margin-top: 20px;"></div>
 
 ## 🌈 赞助商
 
@@ -63,30 +64,11 @@ head:
 2. [成为赞助者](./guide/sponsor.md)
 
 <SiteInfo
-name="CodeGeeX"
-desc="免费必装的智能编程助手"
-url="https://codegeex.cn/?utm_source=pay&utm_medium=fast-request"
-logo="/img/sponsor/codegeex.svg"
-preview="/img/sponsor/codegeex-home.png"
+name="灯灯"
+desc="多租户中后台快速开发平台"
+url="https://tangyh.top/?form=mdp"
+preview="/img/sponsor/lamp-home.png"
 style="max-width:370px"
-/>
-
-<SiteInfo
-name="Apifox"
-desc="API 设计、开发、测试一体化协作平台"
-url="http://apifox.com/?utm_source=pay&utm_medium=fast-request"
-logo="/img/sponsor/apifox.png"
-preview="/img/sponsor/apifox-home.png"
-style="max-width:370px"
-/>
-
-<SiteInfo
-  name="引迈信息"
-  desc="一键生成表单信息"
-  url="https://www.jnpfsoft.com/index.html?from=fast-request"
-  logo="/img/sponsor/jnpfsoft-logo.png"
-  preview="/img/sponsor/jnpfsoft-home.png"
-  style="max-width:370px"
 />
 
 ## 优势
@@ -112,13 +94,4 @@ style="max-width:370px"
 
 <!-- @include: @src/compare.snippet.md -->
 
-## 🎉 致谢
-
-**Fast Request** 简称 **FR** 。自从 2021 年上线以来获得了很多人的支持。目前微信社区群 1000 多人，下载超过 ![Downloads](https://img.shields.io/jetbrains/plugin/d/16988?color=FE2857)，感谢各位支持者的一路同行，我们会努力提升软件的人性化程度，同时也让软件变得有趣。
-
-感谢 OSCHINA 和 Gitee 官方平台对 **FR** 项目的推荐和肯定。**Restful Fast Request**在 [**2021**](https://www.oschina.net/question/2918182_2324736) 年度获得"OSC 年度最受欢迎个人项目" <Badge vertical="baseline">Top 15</Badge> 殊荣。
-
 <!-- @include: @src/contact.snippet.md -->
-
-[plugin]: https://plugins.jetbrains.com/plugin/16988
-[plugin-img]: https://img.shields.io/badge/plugin-主页-x.svg?logo=IntelliJ%20IDEA

@@ -6,7 +6,7 @@ import { zhSidebar } from "./sidebar.js";
 export default hopeTheme(
   {
     hostname: "http://mddata.top",
-    logo: "/img/fastRequest.svg",
+    logo: "/img/mdp.svg",
 
     repo: "https://github.com/henhen6/mdp-docs",
     docsDir: "docs",

@@ -15,23 +15,8 @@ const routePath = useRoutePath();
 const page = usePageData();
 
 const sidebarTopArray = [
-  `<a href="https://codegeex.cn/?utm_source=pay&utm_medium=fast-request" target="_blank">
-    <img className="no-zoom" height="50px" width="220px" src="/img/sponsor/codegeex-line.svg">
-  </a>`,
-  `<a href="https://brucege.com/pay/view?code=fastRequest" target="_blank">
-    <img className="no-zoom" height="50px" width="220px" src="/img/sponsor/mybatisCodeHelperPro.svg">
-  </a>`,
-  `<a href="https://doc.xiaominfo.com/?utm_source=FastRequest" target="_blank">
-    <img className="no-zoom" src="/img/sponsor/knife4j.svg">
-  </a>`,
-  `<a href="http://apifox.com/?utm_source=pay&utm_medium=fast-request" target="_blank">
-    <img className="no-zoom" height="50px" width="220px" src="/img/sponsor/apifox-line.png">
-  </a>`,
-  `<a href="https://www.jnpfsoft.com/index.html?from=fast-request" target="_blank">
-    <img className="no-zoom" height="50px" width="220px" src="/img/sponsor/jnpfsoft.jpg">
-  </a>`,
-  `<a href="https://t.zsxq.com/hqBj7" target="_blank">
-    <img className="no-zoom" height="50px" width="220px" src="/img/sponsor/mnhs.svg">
+  `<a href="https://tangyh.top/" target="_blank">
+    <img className="no-zoom" height="50px" width="220px" src="/img/sponsor/lamp.png">
   </a>`,
 ];
 
@@ -62,7 +47,6 @@ function renderSponsor(){
     <div style="width:230px;margin:5px auto;">
     ${sidebarTopArray.slice(0, 4).join("\n  ")}
     <br/>
-    <!--  <span style='color: grey;font-size: 11px;'>广告采用随机方式显示</span>-->
       <span style='float: right;'>
       <a href='/guide/sponsor.html' style='color: var(--vp-c-accent-bg);font-size: 11px;font-weight: bolder;'>成为赞助商</a>
       </span>

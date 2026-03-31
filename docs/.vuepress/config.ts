@@ -6,8 +6,8 @@ import { path } from "vuepress/utils";
 import theme from "./theme.js";
 
 export default defineUserConfig({
-  title: "Fast Request",
-  description: "Intellij Restful Fast Request",
+  title: "Mdp",
+  description: "主数据平台",
   shouldPrefetch: false,
   head: [
     [
@@ -80,9 +80,6 @@ export default defineUserConfig({
   locales: {
     "/": {
       lang: "zh-CN",
-    },
-    "/en/": {
-      lang: "en-US",
     },
   },
 
