@@ -32,7 +32,7 @@
 - [x] 分布式定时任务
 - [x] 学习和个人使用免费，不支持商用。
 
-<button class="buyBtn" onclick="window.open('https://github.com/henhen6/mdp')">下载源码</button>
+<button class="buyBtn" onclick="window.open('https://github.com/henhen6/mddata')">下载源码</button>
 </div>
 
 <div class="hint-container tip" style="margin-left:15px;width:50%">

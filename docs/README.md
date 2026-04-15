@@ -13,7 +13,7 @@ actions:
   - text: Github
     link: https://github.com/henhen6/mdp
   - text: Gitee
-    link: https://gitee.com/henhen6/mdp
+    link: https://gitee.com/henhen6/mddata
   - text: Gitcode
     link: https://gitcode.com/henhen6/mdp
     
