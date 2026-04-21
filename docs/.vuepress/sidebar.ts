@@ -4,6 +4,7 @@ export const zhSidebar = sidebar({
   "/en/": false,
 
   "/doc/": [
-      "简介"
+      "简介",
+      "如何让作者积极帮助你",
   ],
 });

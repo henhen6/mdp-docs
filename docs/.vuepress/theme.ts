@@ -20,7 +20,7 @@ export default hopeTheme(
     editLink: false,
     contributors: false,
 
-    darkmode: "enable",
+    // darkmode: "enable",
 
     locales: {
       "/": {
