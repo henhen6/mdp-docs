@@ -1,21 +1,26 @@
 import { hopeTheme } from "vuepress-theme-hope";
+import { path } from "vuepress/utils";
 
 import navbar from "./navbar.js";
 import sidebar from "./sidebar.js";
 
 export default hopeTheme({
-  hostname: "https://vuepress-theme-hope-docs-demo.netlify.app",
+  hostname: "http://mddata.top",
 
   author: {
-    name: "Mr.Hope",
-    url: "https://mister-hope.com",
+    name: "很很",
+    url: "https://github.com/hhen",
   },
 
-  logo: "https://theme-hope-assets.vuejs.press/logo.svg",
+  logo: "/img/mdp.svg",
 
-  repo: "vuepress-theme-hope/vuepress-theme-hope",
+  repo: "https://github.com/henhen6/mdp-docs",
 
   docsDir: "src",
+  docsBranch: "main",
+  pageInfo: false,
+  fullscreen: true,
+  contributors: false,
 
   // 导航栏
   navbar,
@@ -24,7 +29,7 @@ export default hopeTheme({
   sidebar,
 
   // 页脚
-  footer: "默认页脚",
+  copyright: "Copyright © 2026-present henhen6",
   displayFooter: true,
 
   // 加密配置
@@ -45,18 +50,25 @@ export default hopeTheme({
   // 如果想要实时查看任何改变，启用它。注: 这对更新性能有很大负面影响
   // hotReload: true,
 
+
   // 此处开启了很多功能用于演示，你应仅保留用到的功能。
   markdown: {
     align: true,
     attrs: true,
     codeTabs: true,
+    chartjs: true,
     component: true,
     demo: true,
     figure: true,
     gfm: true,
     imgLazyload: true,
     imgSize: true,
-    include: true,
+    include: {
+      resolvePath: (file) =>
+          file.startsWith("@src")
+              ? file.replace("@src", path.resolve(import.meta.dirname, ".."))
+              : file,
+    },
     mark: true,
     plantuml: true,
     spoiler: true,
@@ -130,12 +142,40 @@ export default hopeTheme({
     },
 
     components: {
-      components: ["Badge", "VPCard"],
+      components: [
+        "Badge",
+        "BiliBili",
+        "SiteInfo",
+        "VPBanner",
+        "VPCard",
+        "VidStack"
+      ],
     },
 
     icon: {
       prefix: "fa6-solid:",
     },
+
+    notice: [
+      {
+        path: "/",
+        title: "将在2026.4.1推出 v1.0.0",
+        content:
+            '<ul><li>1. 单点登录中心</li>' +
+            '<li>2. 开放平台</li>'+
+            '<li>3. 后台管理系统</li>'+
+            '</ul><div class="addthis_inline_follow_toolbox_qssu"></div>',
+        actions: [
+          {
+            text: "了解详情→",
+            link: "/guide/history.html",
+            type: "primary",
+          },
+        ],
+        showOnce: true,
+        key: "2026.4.1",
+      },
+    ],
 
     // 如果你需要 PWA。安装 @vuepress/plugin-pwa 并取消下方注释
     // pwa: {

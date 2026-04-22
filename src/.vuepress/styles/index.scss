@@ -1,1 +1,78 @@
 // place your custom styles here
+
+.vp-hero-info {
+  margin-top: 100px;
+  .vp-hero-image {
+    max-width: 500px;
+    max-height: 150px;
+    margin: 0 auto;
+  }
+}
+
+.vp-features {
+  &:first-child {
+    border-top: none;
+  }
+}
+
+.vp-feature-item {
+  &:hover {
+    background-color: #30303360;
+  }
+
+  .vp-feature-title {
+    font-family: alimamaYuanMainDesc, sans-serif;
+    font-variation-settings:
+            "wght" 700,
+            "BEVL" 100;
+  }
+
+  .vp-feature-details {
+    font-weight: 600;
+  }
+}
+
+.compare-wrapper {
+  width: 100%;
+
+  .hint-container {
+    border: none;
+    &.info .compare-title {
+      background: #087cfa;
+    }
+
+    &.tip .compare-title {
+      background: #21d789;
+    }
+  }
+
+  .compare-title {
+    font-size: 22px;
+    border-radius: 0.2rem;
+    font-weight: 900;
+    color: var(--vp-c-black);
+    margin: 1rem 0;
+    padding: 0.5rem;
+
+    .icon {
+      margin: 0 0.25em;
+    }
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+  }
+}
+
+.advantage-more {
+  cursor: pointer;
+  font-size: 16px;
+  padding: 10px;
+  margin-bottom: 20px;
+  background-color: #ffffff;
+  position: relative;
+  border-radius: 8px;
+  color: #000;
+  text-decoration: none;
+}
