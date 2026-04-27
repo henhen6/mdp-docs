@@ -9,7 +9,7 @@ export default hopeTheme({
 
   author: {
     name: "很很",
-    url: "https://github.com/hhen",
+    url: "https://github.com/henhen6",
   },
 
   logo: "/img/mdp.svg",
@@ -55,13 +55,16 @@ export default hopeTheme({
   markdown: {
     align: true,
     attrs: true,
+    tabs: true,
     codeTabs: true,
+    mermaid: true,
     chartjs: true,
     component: true,
     demo: true,
     figure: true,
     gfm: true,
     imgLazyload: true,
+    imgMark: true,
     imgSize: true,
     include: {
       resolvePath: (file) =>
@@ -70,6 +73,7 @@ export default hopeTheme({
               : file,
     },
     mark: true,
+    footnote: true,
     plantuml: true,
     spoiler: true,
     stylize: [
@@ -88,7 +92,6 @@ export default hopeTheme({
     ],
     sub: true,
     sup: true,
-    tabs: true,
     tasklist: true,
     vPre: true,
 
@@ -114,7 +117,7 @@ export default hopeTheme({
     // echarts: true,
 
     // 在启用之前安装 flowchart.ts
-    // flowchart: true,
+    flowchart: true,
 
     // 在启用之前安装 mermaid
     // mermaid: true,

@@ -8,4 +8,4 @@ tag:
   - 项目启动
 ---
 
-<AutoCatalog />
+<Catalog />

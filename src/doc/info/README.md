@@ -8,4 +8,4 @@ tag:
   - 快速了解
 ---
 
-<AutoCatalog />
+<Catalog />

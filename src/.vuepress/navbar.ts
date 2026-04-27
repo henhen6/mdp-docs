@@ -15,7 +15,7 @@ export default navbar([
   {
     text: "购买",
     icon: "buy",
-    link: "/buy/index",
+    link: "/buy/立即购买",
   },
   {
     text: "升级日志",

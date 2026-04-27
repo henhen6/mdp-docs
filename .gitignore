@@ -22,7 +22,7 @@ pnpm-lock.yaml
 yarn.lock
 
 # VuePress
-docs/.vuepress/dist
+src/.vuepress/dist
 
 # Baidu Push
 urls.txt

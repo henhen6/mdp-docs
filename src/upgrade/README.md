@@ -8,4 +8,4 @@ tag:
   - 升级日志
 ---
 
-<AutoCatalog />
+<Catalog />

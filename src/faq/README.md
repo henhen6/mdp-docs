@@ -8,4 +8,4 @@ tag:
   - 常见问题
 ---
 
-<AutoCatalog />
+<Catalog />

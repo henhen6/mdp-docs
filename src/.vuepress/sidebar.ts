@@ -33,6 +33,7 @@ export default sidebar({
       prefix: "info/",
       collapsible: COLLAPSIBLE,
       children: [
+        "概念解释",
         "架构介绍",
       ],
     },
@@ -45,4 +46,11 @@ export default sidebar({
       ],
     },
   ],
+  "/buy/": [
+    "立即购买",
+    "交付物",
+    "购买须知",
+    "功能对比",
+    "广告位"
+  ]
 });

@@ -12,6 +12,9 @@
     "docs:update-package": "pnpm dlx vp-update"
   },
   "devDependencies": {
+    "chart.js": "^4.5.1",
+    "flowchart.ts": "^3.0.1",
+    "mermaid": "^11.14.0",
     "@mdit/plugin-container": "0.16.0",
     "@vuepress/bundler-vite": "2.0.0-rc.28",
     "sass-embedded": "^1.98.0",
