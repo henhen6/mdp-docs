@@ -43,6 +43,17 @@ export default sidebar({
       collapsible: COLLAPSIBLE,
       children: [
         "环境准备",
+        "服务介绍",
+        "项目导入",
+        {
+          text: "后端启动",
+          prefix: "backend/",
+          collapsible: COLLAPSIBLE,
+          children: [
+            "单体版启动",
+            "微服务版启动"
+          ],
+        },
       ],
     },
   ],
