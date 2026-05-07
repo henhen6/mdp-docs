@@ -54,6 +54,7 @@ export default sidebar({
             "微服务版启动"
           ],
         },
+        "前端启动",
       ],
     },
   ],
