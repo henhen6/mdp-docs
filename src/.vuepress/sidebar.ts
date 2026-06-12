@@ -57,6 +57,29 @@ export default sidebar({
         "前端启动",
       ],
     },
+    {
+      text: "项目集成",
+      prefix: "integration/",
+      collapsible: COLLAPSIBLE,
+      children: [
+        {
+          text: "SSO",
+          prefix: "sso/",
+          collapsible: COLLAPSIBLE,
+          children: [
+            "若依",
+          ],
+        },
+        {
+          text: "Oauth2",
+          prefix: "oauth2/",
+          collapsible: COLLAPSIBLE,
+          children: [
+            "若依",
+          ],
+        },
+      ],
+    },
   ],
   "/buy/": [
     "立即购买",
@@ -64,5 +87,14 @@ export default sidebar({
     "购买须知",
     "功能对比",
     "广告位"
+  ],
+  "/config/": [
+
+  ],
+  "/upgrade/": [
+
+  ],
+  "/faq/": [
+
   ]
 });
