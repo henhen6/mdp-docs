@@ -92,7 +92,9 @@ export default sidebar({
 
   ],
   "/upgrade/": [
-
+    "1.x版本升级日志",
+    "0.x版本升级日志",
+    "功能蓝图",
   ],
   "/faq/": [
 
