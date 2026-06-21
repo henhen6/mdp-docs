@@ -20,7 +20,7 @@ export default navbar([
   {
     text: "升级日志",
     icon: "changelog",
-    link: "/upgrade/index",
+    link: "/upgrade/1.x版本升级日志",
   },
   // {
   //   text: "历史文档",
