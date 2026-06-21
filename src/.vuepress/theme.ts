@@ -140,9 +140,9 @@ export default hopeTheme({
       provider: "Giscus",
       comment: true,
       repo: "henhen6/mdp-docs",
-      repoId: "MDEwOlJlcG9zaXRvcnkxMTc3NzQyOTA=",
+      repoId: "R_kgDOR0knkQ",
       category: "Announcements",
-      categoryId: "DIC_kwDOBwUX0s4CVI47",
+      categoryId: "DIC_kwDOR0knkc4C_i6D",
     },
 
     components: {
