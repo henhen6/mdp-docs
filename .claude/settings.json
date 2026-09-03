@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "additionalDirectories": [
+      "~/gitee/mdp",
+      "~/gitee/mdp-vben"
+    ]
+  }
+}
