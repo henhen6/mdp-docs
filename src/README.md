@@ -11,7 +11,7 @@ tagline: 一套集单点登录、管理后台、开放平台的后台管理系�
 actions:
   - text: 文档
     icon: lightbulb
-    link: /doc/
+    link: /doc/简介
     type: primary
   - text: Github
     link: https://github.com/henhen6/mdp
