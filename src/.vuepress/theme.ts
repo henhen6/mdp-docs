@@ -163,11 +163,11 @@ export default hopeTheme({
     notice: [
       {
         path: "/",
-        title: "将在2026.4.1推出 v1.0.0",
+        title: "将在2026.8.20推出 v1.5.0",
         content:
-            '<ul><li>1. 单点登录中心</li>' +
-            '<li>2. 开放平台</li>'+
-            '<li>3. 后台管理系统</li>'+
+            '<ul><li>1. 统计大屏</li>' +
+            '<li>2. 文件管理（分片上传、断点续传、大文件上传）</li>'+
+            '<li>3. 开放平台 功能重构</li>'+
             '</ul><div class="addthis_inline_follow_toolbox_qssu"></div>',
         actions: [
           {
@@ -177,7 +177,7 @@ export default hopeTheme({
           },
         ],
         showOnce: true,
-        key: "2026.4.1",
+        key: "2026.8.20",
       },
     ],
 
