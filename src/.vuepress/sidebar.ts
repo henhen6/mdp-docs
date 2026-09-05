@@ -58,7 +58,7 @@ export default sidebar({
       ],
     },
     {
-      text: "项目集成",
+      text: "应用接入",
       prefix: "integration/",
       collapsible: COLLAPSIBLE,
       children: [
