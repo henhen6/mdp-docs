@@ -25,12 +25,12 @@ tag:
 
 ### 1. 在MDP平台配置应用
 
-在 MDP【控制台】-【开放平台】-【应用管理】新建应用，登录方式选择【Oauth2】，重点配置：
+在 MDP【控制台】-【开放平台】-【应用管理】新建应用，登录方式选择【OAuth2认证】，重点配置：
 
 | 字段 | 值 | 说明 |
 | ---- | ---- | ---- |
 | 应用名称 | 若依oauth2 | |
-| 登录方式 | Oauth2 | 标准的Oauth2协议 |
+| 登录方式 | OAuth2认证 | 标准的OAuth2协议 |
 | 免登录跳转地址 | http://localhost:1024/login | 从工作台跳转进入时的落地页 |
 | 跳转地址白名单（oauth2AllowRedirectUris） | http://localhost:1024/login | `redirect_uri` 必须与白名单**完全匹配** |
 

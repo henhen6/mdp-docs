@@ -51,7 +51,7 @@ tag:
 
    ![](/img/doc/配置应用-若依-sso.png)
 
-   联系管理员，登录MDP【控制台】-【开放平台】-【应用管理】页面，点击[新增]按钮新建应用。登录方式选择【单点登录】。
+   联系管理员，登录MDP【控制台】-【开放平台】-【应用管理】页面，点击[新增]按钮新建应用。登录方式选择【ticket模式】。
 
    应用新建后，应用ID和应用秘钥会自动生成，可点击【秘钥】按钮查看
    
@@ -71,7 +71,7 @@ tag:
    | 是否显示 | true | true：在我的应用列表显示；false：在我的应用列表隐藏 |
    | 首页地址 |      | 项目首页或者官网 |
    | 允许授权的IP |      | 多个ip使用英文逗号分割；接口调用、单点登录、单点注销时，会校验IP地址是否与之匹配。 |
-   | 登录方式 | 单点登录 | 单点登录：sa-token的模式3  Oauth2：标准的Oauth2协议 |
+   | 登录方式 | ticket模式 | ticket模式：sa-token的模式3  OAuth2：标准的OAuth2协议 |
    | 免登录跳转地址 | http://localhost:1024/login | 在我的应用点击应用图标时，跳转到应用时完成自动登录。[参考文档](https://sa-token.cc/doc.html#/sso/sso-home-jump) <br/>注意：应用需要提前开发该页面 |
    | 跳转地址白名单 | http://localhost:1024/login | 此配置允许使用 * 通配符，多个地址使用 , 分割。[参考文档](https://sa-token.cc/doc.html#/sso/sso-check-domain) |
    | 是否接收推送 | true | 使用模式三对接的应用必须依托“接收消息推送”才可以完成单点注销服务。[参考文档](https://sa-token.cc/doc.html#/sso/message-push) |

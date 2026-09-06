@@ -58,6 +58,8 @@ flowchart LR
 | 授权范围控制 | 无 | scope 机制（userinfo / openid / unionid） |
 | 适用场景 | 简单内部系统对接 | 需要标准协议、需要控制授权范围、需要多应用统一身份 |
 
+![与sa-token对应关系](/img/doc/登录方式-sa-token对应关系.png)
+
 ## 接入的推荐顺序
 
 1. 阅读 [准备工作](准备工作.md)，在 MDP 平台创建应用并获取 `appKey`、`appSecret` 等凭证；
