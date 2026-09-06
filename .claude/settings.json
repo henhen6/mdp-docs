@@ -2,7 +2,14 @@
   "permissions": {
     "additionalDirectories": [
       "~/gitee/mdp",
-      "~/gitee/mdp-vben"
+      "~/gitee/mdp-vben",
+      "~/gitee/mdp-web",
+      "~/gitee/mdp-web-vben",
+      "~/gitee/RuoYi",
+      "~/gitee/RuoYi-Vue",
+      "~/gitee/RuoYi-Vue-oauth2",
+      "~/gitee/blog",
+      "~/gitee/vben-skills"
     ]
   }
 }
