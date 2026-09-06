@@ -7,8 +7,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 MDP（主数据平台）产品文档站点，基于 VuePress 2 (rc) + vuepress-theme-hope 主题，使用 pnpm 管理依赖。所有文档内容均为简体中文。
 
 本项目主要是 MDP（主数据平台）产品的使用文档、开发文档。
-- mdp后端存放路径： @~/gitee/mdp
-- mdp前端存放路径： @~/gitee/mdp-vben
+- mdp后端项目（sso-server）：存放路径： @~/gitee/mdp
+- mdp前端项目（sso-server）： 存放路径： @~/gitee/mdp-vben
+- RuoYi-Vue-Sso（sso-client)： 已实现ticket模式，存放路径： @~/gitee/RuoYi-Vue
+- RuoYi-Vue-Oauth（sso-client)：已实现Oauth2模式，存放路径： @~/gitee/RuoYi-Vue-sso
 
 ## 常用命令
 

@@ -62,22 +62,22 @@ export default sidebar({
       prefix: "integration/",
       collapsible: COLLAPSIBLE,
       children: [
+        "",
+        "准备工作",
         {
-          text: "SSO",
-          prefix: "sso/",
+          text: "单点登录",
+          prefix: "单点登录/",
           collapsible: COLLAPSIBLE,
           children: [
-            "若依",
+            { text: "ticket模式", link: "ticket模式" },
+            { text: "oauth2模式", link: "oauth2模式" },
+            { text: "若依实战（ticket模式）", link: "若依实战-ticket模式" },
+            { text: "若依实战（oauth2模式）", link: "若依实战-oauth2模式" },
           ],
         },
-        {
-          text: "Oauth2",
-          prefix: "oauth2/",
-          collapsible: COLLAPSIBLE,
-          children: [
-            "若依",
-          ],
-        },
+        "接口调用",
+        "事件回调",
+        "接口回调",
       ],
     },
   ],

@@ -1,10 +1,10 @@
 ---
-title: 若依
-order: 1
+title: 若依实战（ticket模式）
+order: 7
 category:
-  - 若依 
+  - 项目集成
 tag:
-  - 若依
+  - 项目集成
 ---
 
 ## 本章节演示Ruoyi-vue框架对接MDP
@@ -412,7 +412,7 @@ tag:
 
    @tab 单体版server-url
 
-   ![](/Users/tangyh/gitee/mdp-docs/src/.vuepress/public/img/doc/若依-sso-sa-token配置说明-server-url-boot.png) 
+   ![](/img/doc/若依-sso-sa-token配置说明-server-url-boot.png)
 
    @tab 微服务版server-url
 
@@ -420,7 +420,7 @@ tag:
 
    @tab 其他固定参数
 
-   ![](/Users/tangyh/gitee/mdp-docs/src/.vuepress/public/img/doc/若依-sso-sa-token配置说明-server接口.png)
+   ![](/img/doc/若依-sso-sa-token配置说明-server接口.png)
 
    :::
 
@@ -696,32 +696,33 @@ Sa-token支持4种注销方式，本项目采用的是全端注销。
 
 事件订阅主要用于做数据同步，对于历史项目来说，上线时需要考虑历史数据同步和新数据同步问题。事件订阅用于解决新数据同步。历史数据则需要根据具体的项目情况，自行线下同步。
 
+详细的协议说明（消息格式、加解密、重试机制）见[事件回调](../事件回调.md)。
+
 1. 在MDP平台配置“[事件订阅](#在mdp平台配置应用)”
 
 2. 在应用端开发“通知地址”接口，用于接收事件推送。
 
    回调方法超时时间是5分钟，若你的业务比较复杂，请先存储事件日志后立即返回，然后异步处理事件的业务逻辑。若在5分钟内，MDP没有接收到返回，视为超时，会在之后的 **2m,5m,30m,6h,12h**发起重试，5次重试后就会停止重试。
 
-   - 入参固定格式： `@RequestBody String content` ，通过`JSON.parseObject(content);`解析后，格式如下：
+   - 验签与解密：平台推送使用 `notifyToken`（SHA1 签名校验令牌）+ `notifyEncodingAesKey`（AES 消息加解密秘钥），`mdp-sdk-core` 的 `MdpBizMsgCrypt` 已封装全部逻辑，推荐加密类型选择**安全模式**；
 
-     重点关注：method和biz_content。根据method的不同，biz_content也会不同，biz_content的格式遵循规则：
-
-     - 涉及单条数据时，格式为：`{id: 123}`。比如：新增和修改时，推送组件ID，具体的业务数据还需要额外调用其他接口进行查询。
-     - 涉及多条数据时，格式为: `{ids: [11,22,33]}`。比如：批量删除时，推送一个数据。
+   - 解密后的明文格式（字段名小写驼峰），重点关注 `method` 和 `bizContent`：
 
      ```json
      {
-         "app_key": "应用ID",
          "type": "EVENT_PUSH",    // 回调类型,这里固定为EVENT_PUSH  {EVENT_PUSH: 事件推送  CALLBACK: 接口回调}
-         "format": "json",     // 返回结果格式,JSON/XML,固定填:JSON
-         "charset": "utf8",   // 请求使用的编码格式
-         "sign_type": "RSA2",  // 生成签名字符串所使用的签名算法类型
-         "timestamp": "2026-06-20 15:30:22",  // 	发送请求的时间，格式"yyyy-MM-dd HH:mm:ss"
          "method": "订阅的事件编码",
-         "biz_content": "{\"id\":\"10001\"}",  // 业务参数
-         "sign": "xxxxx" // 请求参数的签名串
+         "appKey": "应用ID",
+         "timestamp": "1754280000",  // 秒级时间戳
+         "eventTriggerId": 9876543210,  // 事件触发ID，可用于幂等去重
+         "bizContent": {"id": 10001}  // 业务参数
      }
      ```
+
+     根据method的不同，bizContent也会不同，bizContent的格式遵循规则：
+
+     - 涉及单条数据时，格式为：`{"id": 123}`。比如：新增和修改时，推送数据ID，具体的业务数据还需要额外调用其他接口进行查询。
+     - 涉及多条数据时，格式为: `{"ids": [11,22,33]}`。比如：批量删除时，推送一组数据。
 
    - 返回值固定格式： `{code: 0, msg: "错误原因"}`
 
@@ -731,66 +732,78 @@ Sa-token支持4种注销方式，本项目采用的是全端注销。
    @Tag(name = "接收平台回调")
    public class CallbackController {
        private static final Logger log = LoggerFactory.getLogger(CallbackController.class);
-   
-     	// MDP 开放平台服务(sop-gateway-server)地址，建议配置在yml
-       static String url = "http://localhost:23456/api";
+
        // 应用ID，建议配置在yml
        static String appId = "ruoyi-vue-sso";
-       // 平台公钥，建议配置在yml
-       static String publicKey = "...";
-       /**
-        * 开发者私钥，建议配置在yml
-        */
-       static String privateKeyIsv = "...";
-   
-       // 声明一个就行
-       static OpenClient client = new OpenClient(url, appId, privateKeyIsv, publicKey);
-   
+       // 签名校验令牌（即平台应用密钥配置中的 签名校验令牌），建议配置在yml
+       static String notifyToken = "...";
+       // 消息加解密秘钥（即平台应用密钥配置中的 消息加解密秘钥，43字符），建议配置在yml
+       static String notifyEncodingAesKey = "...";
+
+     	// MDP 开放平台服务(sop-gateway-server)地址，建议配置在yml
+       static String url = "http://localhost:23456/api";
+
        @PostMapping("/notify")
-       public Result<String> callback(@RequestBody String content) {
+       public ApiResponse<String> callback(HttpServletRequest request, @RequestBody String content) {
            log.info("收到回调通知, content={}", content);
-           JSONObject jsonObject = JSON.parseObject(content);
-   
-           // 签名校验
-           if (!checkSign(jsonObject)) {
-               return Result.error("签名校验错误");
+
+           // 1. 从URL获取验签参数（小写驼峰）
+           String signature = request.getParameter("signature");
+           String timestamp = request.getParameter("timestamp");
+           String nonce = request.getParameter("nonce");
+           String msgSignature = request.getParameter("msgSignature");
+           String encryptType = request.getParameter("encryptType");
+
+           JSONObject body = JSON.parseObject(content);
+           String appKey = body.getString("appKey");
+
+           // 2. 构建加解密实例（token、encodingAesKey 与平台应用密钥配置保持一致）
+           MdpBizMsgCrypt crypt;
+           String plaintext;
+           try {
+               crypt = new MdpBizMsgCrypt(notifyToken, notifyEncodingAesKey, appKey);
+
+               // 3. 验签 + 解密
+               if (StrUtil.isBlank(encryptType)) {
+                   // 明文模式：验 signature，消息体即明文
+                   if (!crypt.verifySignature(timestamp, nonce, "", signature)) {
+                       return ApiResponse.error("验签失败");
+                   }
+                   plaintext = body.toJSONString();
+               } else {
+                   // 加密模式（兼容/安全）：decryptMsg 内部完成 msgSignature 验签 + AES 解密
+                   plaintext = crypt.decryptMsg(body.getString("encrypt"), timestamp, nonce, msgSignature);
+               }
+           } catch (Exception e) {
+               log.error("消息验签或解密失败", e);
+               return ApiResponse.error("消息验证失败：" + e.getMessage());
            }
-           log.info("签名验证通过，处理业务逻辑");
-           String method = jsonObject.getString("method");
-           // 判断业务类型，处理不同业务
+
+           // 4. 按 method 分发业务处理
+           JSONObject bizData = JSON.parseObject(plaintext);
+           String method = bizData.getString("method");
            switch (method) {
-               // 处理订单创建回调
                case "user:add":
-                   addUser(jsonObject);
+                   addUser(bizData);
                    break;
                case "org:add":
-                   addOrg(jsonObject);
+                   addOrg(bizData);
                    break;
                case "user:edit":
-                   editUser(jsonObject);
+                   editUser(bizData);
                    break;
                case "user:delete":
-                   deleteUser(jsonObject);
+                   deleteUser(bizData);
                    break;
                default:
-                   addUser(jsonObject);
+                   log.warn("未订阅的事件: {}", method);
            }
-   
-           return Result.success("ok");
-       }
-     
-       private boolean checkSign(JSONObject jsonObject) {
-           try {
-               return SignUtil.rsaCheckV2(jsonObject, publicKey, "UTF-8", SignUtil.RSA2);
-           } catch (SopSignException e) {
-               log.error("签名校验错误, jsonObject={}", jsonObject, e);
-               return false;
-           }
+
+           // 5. 处理成功必须返回 code=0，否则平台会判定失败并重试
+           return ApiResponse.success("");
        }
    }
    ```
-
-   
 
 3. 添加依赖
 
@@ -802,28 +815,34 @@ Sa-token支持4种注销方式，本项目采用的是全端注销。
    </dependency>
    ```
 
+   > `mdp-simple-sdk` 依赖 `mdp-sdk-core`，其中 `top.mddata.sdk.core.aes.MdpBizMsgCrypt` 提供了验签解密能力；调用接口拉数据的 `OpenClient`（`top.mddata.sdk.core.client.OpenClient`）也在其中。
+
    
 
 4. 根据method，编写具体的业务代码
 
    ```java
-   private Result<String> addUser(JSONObject jsonObject) {
-       JSONObject bizContent = jsonObject.getJSONObject("biz_content");
+   // 声明一个就行（调用接口拉取业务数据用）
+   // OpenClient 线程安全，url为网关地址，appId为应用ID，privateKeyIsv为应用私钥（RSA2签名用）
+   static OpenClient client = new OpenClient(url, appId, privateKeyIsv);
+
+   private void addUser(JSONObject bizData) {
+       JSONObject bizContent = bizData.getJSONObject("bizContent");
        log.info("业务参数，bizContent={}", bizContent);
-   
+
        // MDP新增的 用户ID
        Long id = bizContent.getLong("id");
-   
+
        UserGetByIdApi param = new UserGetByIdApi();
        IdRequest request = new IdRequest();
        request.setId(id);
        param.setBizModel(request);
-   
+
      	// 调用 mdp-simple-sdk 提供的方法，获取数据
        Result<UserResp> result = client.execute(param);
        if (result.isSuccess()) {
            UserResp response = result.getData();
-   
+
            SysUser sysUser = new SysUser();
            sysUser.setSsoId(request.getId());
            sysUser.setUserName(response.getUsername());
@@ -831,23 +850,19 @@ Sa-token支持4种注销方式，本项目采用的是全端注销。
            sysUser.setEmail(response.getEmail());
            sysUser.setPhonenumber(response.getPhone());
            sysUser.setStatus(response.getState() ? "0" : "1");
-   
+
          	// 入库
            sysUserService.insertUser(sysUser);
-   
-           return Result.success("ok");
        } else {
            log.error("数据拉取失败，请确保开启了SopGatewayServerApplication和WorkerServerApplication");
-           return Result.error("数据拉取失败");
        }
    }
-   
-   private void deleteUser(JSONObject jsonObject) {
-       // 处理订单关闭回调
-       JSONObject bizContent = jsonObject.getJSONObject("biz_content");
+
+   private void deleteUser(JSONObject bizData) {
+       JSONObject bizContent = bizData.getJSONObject("bizContent");
        log.info("业务参数，bizContent={}", bizContent);
        List<Long> ids = bizContent.getList("ids", Long.class);
-   
+
        if (CollUtil.isNotEmpty(ids)) {
            sysUserService.deleteUserBySsoIds(ids);
        }
