@@ -54,25 +54,21 @@ MDP 基于 sa-token OAuth2 实现，支持以下模式（应用可用的模式�
 
 ## 3. 授权码模式完整流程
 
-```
-您的系统                        MDP 授权页（web-workbench 前端）        MDP 后端
-   │ ①浏览器重定向                      │                                │
-   │  /oauth2/authorize?               │                                │
-   │   response_type=code              │                                │
-   │   &client_id=您的应用ID            │                                │
-   │   &redirect_uri=您的回调地址        │                                │
-   │   &scope=userinfo,openid          │                                │
-   │   &state=随机串 ─────────────────> │                                │
-   │                                   │ ②getRedirectUri ─────────────> │
-   │                                   │    未登录→显示登录表单              │
-   │                                   │    已登录但未授权过→显示确认授权页    │
-   │                                   │    <── redirect_uri?code=xxx ── │
-   │ ③浏览器带回 code 重定向 <────────── │                                │
-   │ ④后台 POST /oauth2/token           │                                │
-   │   grant_type=authorization_code   │ ─────────────────────────────> │
-   │   &client_id&client_secret&code    │                                │
-   │ ⑤<── accessToken/refreshToken ────────────────────────────────── │
-   │ ⑥需要用户信息时 POST /oauth2/userinfo（携带 access_token）           │
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as 您的系统
+    participant L as MDP 授权页（web-workbench 前端）
+    participant S as MDP 后端
+
+    C->>L: ①浏览器重定向<br/>/oauth2/authorize?<br/>response_type=code&client_id=您的应用ID<br/>&redirect_uri=您的回调地址<br/>&scope=userinfo,openid&state=随机串
+    L->>S: ②getRedirectUri
+    Note over L: 未登录→显示登录表单<br/>已登录但未授权过→显示确认授权页
+    S-->>L: redirect_uri?code=xxx
+    L-->>C: ③浏览器带回 code 重定向
+    C->>S: ④后台 POST /oauth2/token<br/>grant_type=authorization_code<br/>&client_id&client_secret&code
+    S-->>C: ⑤accessToken/refreshToken
+    C->>S: ⑥需要用户信息时 POST /oauth2/userinfo<br/>（携带 access_token）
 ```
 
 ### 3.1 引导用户授权（步骤①③）
@@ -126,6 +122,28 @@ grant_type=authorization_code&client_id={应用ID}&client_secret={应用秘钥}&
 - `accessToken`：访问令牌，调用 `/oauth2/userinfo` 等资源接口使用；
 - `refreshToken`：刷新令牌，有效期更长；
 - `openid` / `unionid`：若 scope 中包含对应项才会返回（在额外字段中）。
+
+::: warning 注意：OAuth2 的 access_token ≠ 接口调用的 accessToken
+
+MDP 平台存在两种名称相近、但**体系完全独立**的令牌，请勿混用：
+
+| 对比项 | OAuth2 的 access_token | accessToken.get 返回的 accessToken |
+| ------ | ---------------------- | ---------------------------------- |
+| 所属体系 | OAuth2 单点登录链路 | 开放接口调用链路（详见[接口调用](../接口调用.md)） |
+| 获取方式 | 授权码模式：code 换 token；或密码式、凭证式等 | `accessToken.get` 接口，用 `appKey + appSecret` 换取 |
+| 代表身份 | **某个用户**对您应用的授权 | **您的应用**自身 |
+| 请求方式 | POST `/oauth2/token`、`/oauth2/userinfo` 等 `/oauth2/*` 接口 | POST 网关 `/api` 入口，公共参数携带 |
+| 有效期 | 由应用的 `oauth2AccessTokenTimeout` 配置决定 | 默认 2 小时，`forceRefresh=true` 可强制刷新 |
+| 能否刷新 | 有配套 refreshToken（`/oauth2/refresh`） | 无 refreshToken，过期后重新调用 `accessToken.get` |
+| 权限控制 | scope 机制（userinfo / openid / unionid） | 接口授权（应用需获平台授权目标接口） |
+| 能调用什么 | `/oauth2/userinfo` 等用户资源接口 | `user.page`、`org.save`、`msg.sendSms` 等开放接口 |
+
+典型使用场景区分：
+
+- **用户在您系统内登录后要显示头像、昵称** → 用 OAuth2 的 access_token 调 `/oauth2/userinfo`；
+- **您的后台要同步平台组织、用户数据** → 用 `accessToken.get` 换取的 accessToken 调 `org.page`、`user.page` 等开放接口。
+
+:::
 
 ### 3.3 获取用户信息（步骤⑥）
 
