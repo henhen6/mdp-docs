@@ -82,11 +82,13 @@ SysUser selectUserByOpenid(String openid);
 
 ```xml
 <dependency>
-    <groupId>top.mddata</groupId>
+    <groupId>top.mddata.base</groupId>
     <artifactId>sa-token-oauth2-client-starter</artifactId>
-    <version>与MDP后端版本一致</version>
+    <version>${mdp-base.version}</version>
 </dependency>
 ```
+
+> 版本号建议通过 Maven 属性统一管理（如 `${mdp-base.version}`），与 MDP 后端版本保持一致，避免多处硬编码版本号在升级时遗漏同步。
 
 在 `application.yml` 中配置：
 
@@ -276,7 +278,13 @@ function goOauth2ServerUrl(): void {
   getOauth2ServerUrl(location.href).then((res) => {
     if (res.code === 200 && res.data) {
       // 从授权地址中解析后端生成的 state 并缓存，回跳时校验一致性（防CSRF）
-      const state = new URL(res.data).searchParams.get('state')
+      // 注意：MDP 授权页为 hash 路由（#/oauth2/authorize?...），state 在 hash 段的 query 中，
+      // URL.searchParams 只能解析 # 之前的内容，取不到时需手动解析 hash 段
+      const url = new URL(res.data)
+      let state = url.searchParams.get('state')
+      if (!state && url.hash.includes('?')) {
+        state = new URLSearchParams(url.hash.split('?')[1]).get('state')
+      }
       if (state) {
         cache.session.set(STATE_KEY, state)
       }
@@ -330,3 +338,15 @@ function getSafeBackUrl(target: string): string {
 **Q5：登录后提示用户不存在？**
 
 OAuth2 模式以 openid 映射用户（`sys_user.openid` 字段），与 ticket 模式的 `sso_id` 是两个不同的字段。用户需先通过事件回调（主数据同步）或手工方式将 openid 写入 `sys_user`。
+
+**Q6：state 总是校验失败（缓存里取不到）？**
+
+MDP 统一登录页使用 hash 路由（`http://localhost:7700/#/oauth2/authorize?...`），state 参数在 hash 段的 query 中。前端用 `URL.searchParams` 解析授权地址时，**只能解析 `#` 之前的内容**，取不到 hash 段里的 state，导致 sessionStorage 里始终是空的。此时需要手动解析 hash 段：
+
+```typescript
+const url = new URL(res.data)
+let state = url.searchParams.get('state')
+if (!state && url.hash.includes('?')) {
+  state = new URLSearchParams(url.hash.split('?')[1]).get('state')
+}
+```
