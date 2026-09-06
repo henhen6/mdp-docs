@@ -21,42 +21,43 @@ MDP 单点登录基于 Sa-Token SSO 模块（模式二/模式三）实现：
 - **SSO 服务端（认证中心）**：MDP 平台。统一登录页由 `web-workbench` 前端承担，后端接口在 workbench 服务（`SsoServerController`）。
 - **SSO 客户端**：您的系统。需要实现 3 个后端接口 + 1 个前端中转页。
 
-```
-                 ┌ MDP 平台（认证中心）─────────────────────────────┐
-                 │  web-workbench 统一登录页  workbench 后端         │
-                 │  (登录表单/派发ticket)      (SsoServerController) │
-                 └───────────────┬──────────────△────────────────┘
-              派发 ticket        │              │ 调用 pushS：校验ticket
-              （getRedirectUrl） │              │ （checkTicket 后台发起）
-                 ┌───────────────▼──────────────┴────────────────┐
-                 │              您的系统（SSO 客户端）               │
-                 │   前端中转页  +  客户端后端(SsoClientController) │
-                 └────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph CLIENT["您的系统（SSO 客户端）"]
+        C["前端中转页"]
+        D["客户端后端<br/>（SsoClientController）"]
+    end
+    subgraph MDP["MDP 平台（认证中心）"]
+        A["web-workbench 统一登录页<br/>（登录表单/派发ticket）"]
+        B["workbench 后端<br/>（SsoServerController）"]
+    end
+    A -->|"派发 ticket<br/>（getRedirectUrl）"| C
+    D -->|"调用 pushS：校验ticket<br/>（checkTicket 后台发起）"| B
 ```
 
 ## 2. 登录流程总览（模式二/三）
 
-```
-您的系统前端            您的系统后端              MDP 统一登录页                   MDP 服务端后端
-    │                      │                       │                                 │
-    │ ①访问页面，无会话      │                       │                                 │
-    │ ②getSsoAuthUrl ────> │                       │                                │
-    │ <── 认证中心地址 ───── │                       │                                 │
-    │ ③浏览器重定向 ──────────────────────────────> │                                 │
-    │                      │        ④已有MDP会话？ │                                  │
-    │                      │          是│  否：显示登录表单，登录成功                     │
-    │                      │                       │  ⑤getRedirectUrl（获取客户端地址  │
-    │                      │                       │ ──────────────────────────────> │
-    │                      │                       │ <── redirect?ticket=xxx ──────  │
-    │                      │   ⑥浏览器带 ticket 重定向回您的登录页                       │
-    │ <─────────────────────────────────────────── │                                 │
-    │ ⑦doLoginByTicket ──> │                       │                                 │
-    │    （换取本系统token）  │  ⑧checkTicket        │                                 │
-    │                      │  （后台校验ticket，      │                                │
-    │                      │ ───── 即调用 pushS 接口） ──────────────────────────────> │
-    │                      │ <──────────────  userId（loginId）────────────────────── │
-    │ <── 本系统 token ────  │                       │                                 │
-    │ ⑨保存 token，跳回原页面 │                       │                                 │
+```mermaid
+sequenceDiagram
+    autonumber
+    participant F as 您的系统前端
+    participant B as 您的系统后端
+    participant L as MDP 统一登录页
+    participant S as MDP 服务端后端
+
+    F->>F: ①访问页面，无会话
+    F->>B: ②getSsoAuthUrl
+    B-->>F: 认证中心地址
+    F->>L: ③浏览器重定向
+    L->>L: ④已有MDP会话？<br/>否：显示登录表单，登录成功
+    L->>S: ⑤getRedirectUrl（获取客户端地址）
+    S-->>L: redirect?ticket=xxx
+    L-->>F: ⑥浏览器带 ticket 重定向回您的登录页
+    F->>B: ⑦doLoginByTicket（换取本系统token）
+    B->>S: ⑧checkTicket（后台校验ticket，<br/>即调用 pushS 接口）
+    S-->>B: userId（loginId）
+    B-->>F: 本系统 token
+    F->>F: ⑨保存 token，跳回原页面
 ```
 
 步骤说明：
@@ -195,12 +196,15 @@ sa-token:
 
 新建一个中转页（如 `login_sso.vue`），逻辑只有两步：**有 ticket 就登录，没 ticket 就跳认证中心**。
 
-```
-访问中转页
-   │
-   ├─ URL 上有 ticket ──> 调 doLoginByTicket ──> 成功：保存 token，跳转 back 参数指定的原页面
-   │                                        └─ 失败（30004/30005）：显示"重新登录"按钮
-   └─ URL 上无 ticket ──> 调 getSsoAuthUrl(当前页面地址) ──> 重定向到 MDP 统一登录页
+```mermaid
+flowchart TD
+    A[访问中转页] --> B{URL 上有 ticket？}
+    B -->|有| C[调 doLoginByTicket]
+    C --> D{校验结果}
+    D -->|成功| E[保存 token<br/>跳转 back 参数指定的原页面]
+    D -->|失败（30004/30005）| F[显示"重新登录"按钮]
+    B -->|无| G[调 getSsoAuthUrl（当前页面地址）]
+    G --> H[重定向到 MDP 统一登录页]
 ```
 
 参考实现要点：
@@ -287,21 +291,20 @@ http://{您的系统地址}/sso/logoutByAlone?back=https://your-home-page
 
 一处注销、全端下线。客户端和服务端均可发起，整体流程：
 
-```
-您的系统前端        您的系统后端           MDP 服务端后端         所有其它应用
-    │                  │                       │                    │
-    │ ①调用退出接口     │                       │                    │
-    │ ───────────────> │                       │                    │
-    │                  │ ②发起单点注销           │                    │
-    │                  │ （调用 pushS?msgType=signout）             │
-    │                  │ ────────────────────> │                    │
-    │                  │                       │ ③遍历应用列表       │
-    │                  │                       │   逐个推送注销消息   │
-    │                  │                       │ ──────────────────>│
-    │                  │                       │   （logoutCall）    │
-    │                  │                       │ ④MDP 自身会话注销   │
-    │                  │ <── 注销完成 ───────── │                    │
-    │ <── 注销完成 ──── │                       │                    │
+```mermaid
+sequenceDiagram
+    autonumber
+    participant F as 您的系统前端
+    participant B as 您的系统后端
+    participant S as MDP 服务端后端
+    participant O as 所有其它应用
+
+    F->>B: ①调用退出接口
+    B->>S: ②发起单点注销<br/>（调用 pushS?msgType=signout）
+    S->>O: ③遍历应用列表<br/>逐个推送注销消息（logoutCall）
+    S->>S: ④MDP 自身会话注销
+    S-->>B: 注销完成
+    B-->>F: 注销完成
 ```
 
 以上逻辑 sa-token 已在内部封装完毕，您只需按步骤集成。
