@@ -84,7 +84,7 @@ sequenceDiagram
 | `ssoAllowUrl` | 您配置 | **允许授权的重定向地址白名单**，多个用逗号分隔。`redirect` 参数必须在白名单内，否则拒绝重定向 |
 | `ssoPushUrl` | 您配置 | 您系统接收 MDP 推送消息的后端地址（如 `http://your-domain/anyUser/client/pushC`），用于单点注销 |
 | `ssoPush` | 您配置 | 是否接收消息推送。需要单点注销请开启 |
-| `allowIp` | 您配置 | 允许调用 MDP 服务端接口的 IP 白名单。内置应用填内网 IP，第三方应用填您的服务器**外网 IP** |
+| `allowIp` | 您配置 | 你的应用的IP地址。调用 MDP 服务端接口的服务器 IP 地址。内置应用填内网 IP，第三方应用填您的服务器**外网 IP** |
 
 ## 4. 您的系统需要实现的内容
 
@@ -109,7 +109,7 @@ public AjaxResult getSsoAuthUrl(String clientLoginUrl) {
 }
 ```
 
-#### 接口二：根据 ticket 登录（核心）
+#### 接口二：根据 ticket 登录
 
 ```
 GET /anyUser/client/doLoginByTicket?ticket={ticket}
@@ -194,7 +194,7 @@ sa-token:
 
 ### 4.3 前端：登录中转页
 
-新建一个中转页（如 `login_sso.vue`），逻辑只有两步：**有 ticket 就登录，没 ticket 就跳认证中心**。
+在前端项目新建一个中转页（如 `login_sso.vue`，访问地址： http://localhost:1024/login ），逻辑只有两步：**有 ticket 就登录，没 ticket 就跳认证中心**。
 
 ```mermaid
 flowchart TD
@@ -202,7 +202,7 @@ flowchart TD
     B -->|有| C[调 doLoginByTicket]
     C --> D{校验结果}
     D -->|成功| E[保存 token<br/>跳转 back 参数指定的原页面]
-    D -->|失败（30004/30005）| F[显示"重新登录"按钮]
+    D -->|失败（30004/30005）| F[显示「重新登录」按钮]
     B -->|无| G[调 getSsoAuthUrl（当前页面地址）]
     G --> H[重定向到 MDP 统一登录页]
 ```
@@ -246,7 +246,8 @@ methods: {
 
 若您的系统配置了**自动登录地址**（免登录跳转地址），用户在 MDP 工作台"我的应用"点击您的应用时，MDP 会直接派发 ticket 并打开：
 
-```
+```shell
+# 如 http://localhost:1024/login?ticket=xx
 https://your-domain/your-login-path?ticket=xxx
 ```
 
@@ -260,7 +261,7 @@ https://your-domain/your-login-path?ticket=xxx
 
 | 类型 | 影响范围 | 您的系统需要做什么 |
 | ---- | -------- | ------------------ |
-| **单端注销** | 仅当前应用下线，其它应用和认证中心不受影响 | 只需本地 `StpUtil.logout()`（若依等项目对应删除本系统 token） |
+| **单端注销** | 仅当前应用下线，其它应用和认证中心不受影响 | 你项目本来就集成了sa-token，只需本地 `StpUtil.logout()`  <br/>没有集成sa-token，如若依使用的是spring-secrity，则需要自行删除本系统 token |
 | **全端注销（单点注销）** | 一处注销，所有应用 + 认证中心全部下线 | 通知 MDP 服务端，由服务端统一推送注销 |
 | **单浏览器注销** | 仅当前浏览器登录的应用下线，其它浏览器/设备不受影响 | 在全端注销请求上附加 `singleDeviceIdLogout=true` 参数 |
 
