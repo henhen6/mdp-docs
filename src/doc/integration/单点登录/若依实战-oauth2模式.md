@@ -306,7 +306,7 @@ function getSafeBackUrl(target: string): string {
 }
 ```
 
-配套修改与 ticket 模式完全一致（`src/api/login.ts`、路由注册、路由守卫，参考[若依实战（ticket模式）](若依实战-ticket模式.md#前端)），此处不再重复。
+配套修改与 ticket 模式完全一致（`src/api/login.ts`、路由注册、路由守卫，参考[若依实战（ticket模式）的「对接单点登录」一节](若依实战-ticket模式.md#对接单点登录)），此处不再重复。
 
 ## 验证清单
 
