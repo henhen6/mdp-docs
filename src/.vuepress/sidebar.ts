@@ -89,7 +89,15 @@ export default sidebar({
     "广告位"
   ],
   "/config/": [
-
+    "",
+    { text: "编译期配置（filters）", link: "编译期配置filters" },
+    { text: "后端配置（单体版）", link: "后端配置-单体版" },
+    { text: "后端配置（微服务版）", link: "后端配置-微服务版" },
+    "前端配置",
+    "单点登录客户端配置",
+    "开放平台网关配置",
+    "重要配置项详解",
+    { text: "系统配置（mdc_config）", link: "系统配置" },
   ],
   "/upgrade/": [
     "1.x版本升级日志",
