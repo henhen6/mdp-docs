@@ -1,6 +1,5 @@
 ---
 title: 赞助者
-icon: wendang
 order: 1
 category:
   - 赞助者 
