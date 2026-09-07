@@ -53,3 +53,4 @@ pnpm docs:build       # 构建生产版本到 src/.vuepress/dist
 - Git 分支：日常在 `dev` 分支工作，PR 目标分支为 `main`
 - 提交信息使用中文，格式：`type(scope): 描述`（如 `docs(doc): 更新简介文档账号信息`）
 - 文档中的代码示例若涉及敏感信息（数据库连接、密钥），一律使用占位符，不得写入真实凭证
+- 请勿修改 @src/.vuepress/dist、 @src/.vuepress/.cache、 @src/.vuepress/.temp 目录。可以读内容，不能修改。
