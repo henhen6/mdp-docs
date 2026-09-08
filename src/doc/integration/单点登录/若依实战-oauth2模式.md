@@ -45,7 +45,7 @@ tag:
 
 以 openid 作为用户唯一标识，在 `sys_user` 表新增 `openid` 字段：
 
-```mysql
+```sql
 ALTER TABLE sys_user ADD COLUMN openid VARCHAR(64) NULL COMMENT 'MDP开放平台openid';
 ```
 

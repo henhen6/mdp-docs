@@ -121,7 +121,7 @@ tag:
 
    - sys_user表新增sso_id字段
 
-     ```mysql
+     ```sql
      -- 给sys_user表新增sso_id字段
      ALTER TABLE sys_user ADD COLUMN sso_id BIGINT NULL COMMENT '单点登录中心的用户id';
      ```
