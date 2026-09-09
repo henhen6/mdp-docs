@@ -16,7 +16,7 @@
     "@vuepress/bundler-vite": "2.0.0-rc.30",
     "chart.js": "^4.5.1",
     "flowchart.ts": "^3.0.1",
-    "mermaid": "^11.15.0",
+    "mermaid": "^11.17.2",
     "sass-embedded": "^1.100.0",
     "vue": "^3.5.38",
     "vuepress": "2.0.0-rc.30",
