@@ -1,7 +1,7 @@
 import { defineMermaidConfig } from "@vuepress/plugin-markdown-chart/client";
 import { defineClientConfig } from "vuepress/client";
 
-import { EXTENSION_ICONS, FILE_ICONS, ICON_SIZE } from "./fileIcons.js";
+import { EXTENSION_ICONS, FILE_ICONS, FILENAME_ICONS, ICON_SIZE } from "./fileIcons.js";
 
 const ICON_PACK = "mdp-file";
 
@@ -12,6 +12,14 @@ const TREE_VIEW_CONFIG = {
   extensionIcons: Object.fromEntries(
     Object.entries(EXTENSION_ICONS).map(([ext, icon]) => [
       ext,
+      `${ICON_PACK}:${icon}`,
+    ]),
+  ),
+  // 按文件名精确匹配，优先级高于 extensionIcons：文档里 pom.xml 共 19 处，
+  // 若只按 .xml 后缀回退会全画成通用 xml 图标，看不出它是 Maven 构建文件
+  filenameIcons: Object.fromEntries(
+    Object.entries(FILENAME_ICONS).map(([file, icon]) => [
+      file,
       `${ICON_PACK}:${icon}`,
     ]),
   ),
