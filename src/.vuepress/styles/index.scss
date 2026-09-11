@@ -1,5 +1,11 @@
 // place your custom styles here
 
+// 宽图（block-beta、treeView 等 useMaxWidth: false 的图）按自然宽度渲染时会超出正文列宽，
+// 不加横向滚动右侧内容会被直接裁切
+.mermaid-content {
+  overflow-x: auto;
+}
+
 .vp-hero-info {
   margin-top: 100px;
   .vp-hero-image {
