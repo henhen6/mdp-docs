@@ -64,28 +64,42 @@ mdp-base 是 MDP 的**技术框架层**：24 个与具体业务无关的 Maven �
 
 ## 2. 模块依赖关系
 
+箭头方向为「A → B = A 依赖 B」：
+
 ```mermaid
 flowchart LR
-    annotation[md-annotation] --> core[md-core]
-    core --> util[md-util]
-    core --> boot[md-boot]
-    util --> boot
-    uid[md-db-uid] --> db[md-db]
-    core --> db
-    db --> flex[md-db-mybatis-flex]
-    util --> flex
-    flex --> mvc[md-mvc-flex]
-    core --> mvc
-    core --> cache[md-cache-starter]
-    core --> echo[md-echo-starter]
-    core --> log[md-log-starter]
-    core --> xss[md-xss-starter]
-    core --> scan[md-scan-starter]
-    core --> openapi3[md-openapi3-starter]
-    core --> captcha[md-captcha-starter]
-    core --> sop[md-sop-support]
-    util --> codegen[md-codegen]
-    util --> cloud[md-cloud-starter]
+    annotation[md-annotation]
+    core[md-core] --> annotation
+    util[md-util] --> core
+    boot[md-boot] --> core
+    boot --> util
+    uid[md-db-uid] --> core
+    db[md-db] --> core
+    db --> uid
+    flex[md-db-mybatis-flex] --> db
+    flex --> util
+    mvc[md-mvc-flex] --> core
+    mvc --> flex
+    mvc --> cache[md-cache-starter]
+    mvc --> validator[md-validator-starter]
+    cache --> core
+    cache --> util
+    echo[md-echo-starter] --> core
+    log[md-log-starter] --> core
+    log --> util
+    json[md-json-starter] --> util
+    openapi3[md-openapi3-starter] --> core
+    scan[md-scan-starter] --> core
+    validator --> core
+    xss[md-xss-starter] --> core
+    graphic[md-graphic-captcha-starter] --> core
+    slider[md-slider-captcha-starter] --> core
+    slider --> cache
+    cloud[md-cloud-starter] --> core
+    cloud --> util
+    sopsupport[sop-service-support] --> core
+    sopstarter[sop-spring-boot-starter] --> sopsupport
+    codegen[md-codegen] --> util
 ```
 
 ::: tip 二开项目怎么引依赖
@@ -97,7 +111,7 @@ flowchart LR
 | 机制 | 说明 | 典型代表 |
 |---|---|---|
 | 自动配置 | `META-INF/spring/...AutoConfiguration.imports` 注册，引 jar 即生效 | cache/echo/log/json/xss/scan/openapi3/cloud/captcha/sa-token/sop |
-| 抽象类需应用继承 | imports 为空是**有意设计**，应用层子类加 `@Configuration`/`@RestControllerAdvice` 才生效 | `BaseConfig`、`AbstractGlobalExceptionHandler`（md-boot）、`DbConfiguration`（md-db）、`MyMybatisFlexConfiguration`（md-db-mybatis-flex） |
+| 抽象类需应用继承 | 应用层子类加 `@Configuration`/`@RestControllerAdvice` 才生效 | `BaseConfig`、`AbstractGlobalExceptionHandler`（md-boot）、`DbConfiguration`（md-db）、`MyMybatisFlexConfiguration`（md-db-mybatis-flex） |
 | 显式启用注解 | 需应用主动加注解 | `@EnableFormValidator`（md-validator-starter） |
 | 接口/策略 SPI | 实现接口并按约定注册（beanName / META-INF services / 事件监听） | `LoadService`（回显）、`CacheOps`/`CachePlusOps`（缓存）、`SysLogEvent` 监听（日志落库）、`DataPermissionCurrentUser`（数据权限）、SaSso 各 `*Strategy`/`*Function`、`IDocBuildTemplate`（sop）、`IGenerator`/`IDialect`/`ITemplate`（codegen） |
 | `@ConditionalOnMissingBean` 可覆盖 Bean | 应用定义同类型 Bean 即替换默认实现 | `UidGenerator`、`RedisSerializer`、`cacheManager`、`keyGenerator`、`SysLogAspect`、`EchoService` |
@@ -128,4 +142,3 @@ flowchart LR
 
 各配置项的完整字段、默认值与说明以对应模块页面的「可配置参数」表为准。
 
-<Catalog />

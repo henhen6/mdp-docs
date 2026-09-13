@@ -16,25 +16,25 @@ tag:
 | --- | --- |
 | `pom.xml` | 继承 Spring Boot 官方 parent，统一管理全部第三方依赖版本、插件与 profiles |
 | `checkstyle.xml` | 全平台代码规范（命名、导入、体量、嵌套深度、Javadoc 等） |
-| `suppressions.xml` | checkstyle 规则豁免清单（针对 Sa-Token 定制源码等特殊文件） |
+| `suppressions.xml` | checkstyle 规则豁免清单 |
 
-- Maven 坐标：`top.mddata.base:mdp-parent:${revision}`（当前 `revision=1.5.0-SNAPSHOT`）
+- Maven 坐标：`top.mddata.base:mdp-parent:${revision}`
 - 继承关系：`org.springframework.boot:spring-boot-starter-parent:3.5.14`
 - 运行环境：**JDK 17**、UTF-8
 - 下游：`mdp-base`（及其全部子模块）、`mdp-apps` 等工程均继承本 POM
 
 ```mermaid
-flowchart TB
-    SB["spring-boot-starter-parent 3.5.14"] --> P["mdp-parent<br/>第三方版本仲裁 + checkstyle + flatten"]
-    P --> BASE["mdp-base（基础框架 24 模块）"]
-    P --> APPS["mdp-apps（业务服务）"]
+flowchart BT
+    P["mdp-parent<br/>第三方版本仲裁 + checkstyle + flatten"]   -->  SB["spring-boot-starter-parent 3.5.14"]
+    BASE["mdp-base（基础框架 24 模块）"] --> P
+    APPS["mdp-apps（业务服务）"] --> P
 ```
 
 ## 2. 源码解读
 
 ### 2.1 dependencyManagement：BOM import 顺序敏感
 
-`pom.xml:159-219` 按固定顺序 import 了多个官方 BOM：
+`pom.xml` 按固定顺序 import 了多个官方 BOM：
 
 1. `spring-cloud-dependencies`（2025.0.2）
 2. `spring-cloud-alibaba-dependencies`（2025.0.0.0）
@@ -43,7 +43,7 @@ flowchart TB
 5. `mybatis-flex-dependencies`（1.11.7）、`sa-token-bom`（1.45.0）、`knife4j-dependencies`（4.5.0）、`dubbo-bom`（3.3.6）
 
 ::: danger BOM 顺序不能乱
-`pom.xml:190` 有官方注释：**「以上几个配置的顺序不能错，否则会导致 spring、springdoc 的版本不正确」**。Maven BOM 仲裁遵循「先声明者胜出」，调整顺序会静默改变传递依赖版本，引发难以排查的 NoSuchMethodError。
+**「以上几个配置的顺序不能错，否则会导致 spring、springdoc 的版本不正确」**。Maven BOM 仲裁遵循「先声明者胜出」，调整顺序会静默改变传递依赖版本，引发难以排查的 NoSuchMethodError。
 :::
 
 ### 2.2 版本清单（按类别）
@@ -68,13 +68,22 @@ flowchart TB
 
 ### 2.3 maven-compiler-plugin：注解处理器链
 
-`pom.xml:815-847`，编译参数带 `-parameters`（保留方法参数名，Spring MVC/Feign 依赖它）。`annotationProcessorPaths` 顺序：
+`pom.xml`，编译参数带 `-parameters`（保留方法参数名，Spring MVC/Feign 依赖它）。`annotationProcessorPaths` 顺序：
 
 1. `lombok`
+
+   项目中，用到了 Lombok 帮我们减少代码编写，同时用到 Mapstruct 进行 bean 转换。使用到 Lombok 和 Mapstruct 时，其要求我们在 pom.xml 添加 `annotationProcessorPaths` 配置， 此时，我们也需要把 MyBatis-Flex 的 annotation 添加到 `annotationProcessorPaths` 配置里去
+
 2. `lombok-mapstruct-binding`
+
 3. `mapstruct-processor`
+
 4. `mapstruct-plus-processor`
+
 5. `mybatis-flex-processor` —— 编译期生成 `XxxTableDef` 表定义类
+
+   MyBatis-Flex 使用了 APT（Annotation Processing Tool）技术，在项目编译的时候，会自动根据 Entity 类定义的字段帮你生成 "ACCOUNT" 类以及 Entity 对应的 Mapper 类， 通过开发工具构建项目，或者执行 maven 编译命令: `mvn clean package` 都可以自动生成。这个原理和 lombok 一致。
+
 6. `spring-boot-configuration-processor` —— 生成 `spring-configuration-metadata.json`，让 IDE 对 `mdp.*` 配置有提示（pom 注释：**一定要加，否则无法生成提示文件**）
 
 ### 2.4 其他构建约定
@@ -96,16 +105,138 @@ flowchart TB
 
 ### 2.6 checkstyle.xml 规范要点
 
-`Checker + TreeWalker` 双层结构，重点规则：
+`Checker + TreeWalker` 双层结构。下面按规则逐个给出**最佳实践**与**错误示范**（括号内为本工程的实际限制值）：
 
-- **命名**：ConstantName、MemberName、MethodName、TypeName、PackageName、ParameterName 等
-- **导入**：UnusedImports、RedundantImport、IllegalImport
-- **体量**：FileLength、MethodLength、LineLength、ParameterNumber
-- **嵌套深度**：NestedIfDepth、NestedForDepth、NestedTryDepth
-- **常见缺陷**：EqualsHashCode、StringLiteralEquality（禁止 `==` 比较字符串）、SimplifyBoolean*、ModifierOrder、MissingSwitchDefault、UncommentedMain
-- **Javadoc**：JavadocType（类型必须有文档注释）
+#### 2.6.1 命名规范（ConstantName / MemberName / MethodName / TypeName / PackageName / ParameterName）
 
-`suppressions.xml` 对个别文件豁免（如 Sa-Token 定制源码 `SaSsoClientProcessor`/`SaSsoServerProcessor` 的 MethodName 规则），豁免清单是「哪些文件被有意破坏了规范」的线索。
+```java
+// ❌ 错误示范
+public class user_service { }                  // TypeName：类名必须大驼峰
+private String UserName;                        // MemberName：成员变量必须小驼峰
+private static final int MaxRetry = 3;          // ConstantName：常量必须全大写下划线
+public void GetUser() { }                       // MethodName：方法名必须小驼峰
+public void send(String user_name) { }          // ParameterName：参数名必须小驼峰
+package top.Mddata.Base;                        // PackageName：包名必须全小写
+
+// ✅ 最佳实践
+public class UserService { }
+private String userName;
+private static final int MAX_RETRY = 3;
+public void getUser() { }
+public void send(String userName) { }
+package top.mddata.base;
+```
+
+#### 2.6.2 导入规范（UnusedImports / RedundantImport / IllegalImport）
+
+```java
+// ❌ 错误示范
+import java.util.ArrayList;          // UnusedImports：从未使用
+import java.util.List;
+import java.util.List;               // RedundantImport：重复导入
+import sun.misc.Unsafe;              // IllegalImport：禁止引用 JDK 内部 API
+
+// ✅ 最佳实践：只导入实际使用的类；IDE 自动 optimize import 即可保持干净
+import java.util.List;
+```
+
+#### 2.6.3 体量限制（FileLength 2500 / MethodLength 300 / LineLength 10000 / ParameterNumber 8）
+
+```java
+// ❌ 错误示范：参数 9 个，超过 ParameterNumber=8
+public void create(String name, Integer age, String phone, String email,
+                   String address, String city, String zip, String remark, Integer status) { }
+
+// ✅ 最佳实践：参数超过 8 个时收拢成对象
+public void create(UserCreateDto dto) { }
+```
+
+- **MethodLength（300 行）**：方法超长说明职责过多，按业务步骤拆私有方法；
+- **FileLength（2500 行）**：类超长说明违反单一职责，按领域拆类；
+- **LineLength（10000）**：实际不限制，但保持 120~200 列内更利于代码评审比对。
+
+#### 2.6.4 嵌套深度（NestedForDepth 2 / NestedTryDepth 3 / NestedIfDepth 10）
+
+```java
+// ❌ 错误示范：三层 for 嵌套，超过 NestedForDepth=2
+for (Org org : orgs) {
+    for (User user : org.getUsers()) {
+        for (Role role : user.getRoles()) {        // 违规
+            ...
+        }
+    }
+}
+
+// ✅ 最佳实践：提方法或用流式/早退压平
+for (Org org : orgs) {
+    processUsers(org.getUsers());
+}
+
+private void processUsers(List<User> users) {
+    for (User user : users) {
+        user.getRoles().forEach(this::handleRole);
+    }
+}
+```
+
+异常同理：嵌套 try 超 3 层说明异常边界划分有问题，按分层职责收敛异常处理。
+
+#### 2.6.5 常见缺陷（EqualsHashCode / StringLiteralEquality / SimplifyBoolean / ModifierOrder / MissingSwitchDefault / UncommentedMain）
+
+```java
+// ❌ EqualsHashCode：只重写 equals 不重写 hashCode
+public boolean equals(Object o) { ... }            // 缺 hashCode()，HashMap 语义被破坏
+
+// ❌ StringLiteralEquality：用 == 比较字符串（比较的是引用）
+if (status == "SUCCESS") { }
+
+// ✅ 最佳实践
+if ("SUCCESS".equals(status)) { }                 // 字面量放前面还防 NPE
+
+// ❌ SimplifyBoolean：冗余布尔表达式
+if (isVip == true) { }
+return isDeleted ? true : false;
+
+// ✅ 最佳实践
+if (isVip) { }
+return isDeleted;
+
+// ❌ ModifierOrder：修饰符乱序
+public final static String KEY = "k";
+
+// ✅ 最佳实践：按 java.lang 规范顺序 public → static → final
+public static final String KEY = "k";
+
+// ❌ MissingSwitchDefault：switch 缺 default 分支
+switch (type) {
+    case ADD -> handleAdd();
+    // 新增枚举值时静默漏处理
+}
+
+// ✅ 最佳实践
+default -> throw new IllegalArgumentException("未知类型: " + type);   // fail fast
+
+// ❌ UncommentedMain：遗留裸 main 方法（应删除或移到测试代码）
+public static void main(String[] args) { System.out.println("test"); }
+```
+
+#### 2.6.6 Javadoc（JavadocType）
+
+```java
+// ❌ 错误示范：公共类型无文档注释（构建直接失败）
+public class SmsSender { }
+
+// ✅ 最佳实践：类上必须 Javadoc，说明职责与作者
+/**
+ * 短信发送服务：封装 sms4j 多渠道发送与模板参数渲染
+ *
+ * @author henhen6
+ * @since 2026/01/15
+ */
+public class SmsSender { }
+```
+
+`suppressions.xml` 对个别文件豁免（如 Sa-Token 定制源码 `SaSsoClientProcessor`/`SaSsoServerProcessor` 的 MethodName 规则），如在引入第三方源码时改动源码太麻烦，可以加入豁免清单。
 
 ## 3. 可配置参数
 
@@ -119,7 +250,7 @@ flowchart TB
 
 ## 4. 扩展点
 
-- **继承即扩展**：二开新建 Maven 工程时 `<parent>` 指向 `mdp-parent`，即获得全部版本仲裁 + checkstyle + flatten 行为，dependency 无需写版本号
+- **继承即扩展**：二开新建 Maven 工程时 `<parent>` 指向 `mdp-parent`，即获得全部版本 + checkstyle + flatten 行为，dependency 无需写版本号
 - **版本覆盖**：子工程可在自己的 `<properties>` 中重定义版本号属性（如 `<hutool.version>`）实现局部升级
 - **规范定制**：`checkstyle.xml`/`suppressions.xml` 可被下游覆盖（pluginManagement 中路径是相对的，子模块放同名文件即可替换）
 
@@ -128,7 +259,7 @@ flowchart TB
 | 想做什么 | 推荐做法 |
 | --- | --- |
 | 引入新第三方依赖 | 在 `mdp-parent` 的 dependencyManagement 统一声明版本，子模块只写 GAV 不写 version |
-| 升级 Spring Boot | 同时改 parent 版本与 `spring-boot.version` 属性（configuration-processor 用到），并核对 spring-cloud/alibaba 兼容矩阵 |
+| 升级 Spring Boot | 同时改 parent 版本与 `spring-boot.version` 属性，并核对 spring-cloud/alibaba 兼容矩阵 |
 | 放宽某条 checkstyle 规则 | 优先在 `suppressions.xml` 按文件豁免，而不是全局关闭规则 |
 | 二开工程不想继承 | 退而求其次：import `md-bom`（见 [md-bom](mdp-base/md-bom.md)）获得内部构件版本管理，但第三方版本需自行仲裁 |
 
