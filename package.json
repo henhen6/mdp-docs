@@ -1,7 +1,7 @@
 {
   "name": "mdp-docs",
   "description": "doc",
-  "version": "1.0.0",
+  "version": "1.5.1",
   "license": "MIT",
   "type": "module",
   "scripts": {
