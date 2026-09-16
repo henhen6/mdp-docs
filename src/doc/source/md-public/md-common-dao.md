@@ -10,7 +10,7 @@ tag:
 
 ## 1. 模块定位
 
-公共实体的持久层模块（pom description："公共dao模块"）：存放 md-common-pojo 中核心实体（User、Org 等）的 MyBatis-Flex Mapper 接口与 XML。凡是需要直接访问用户/组织表的服务都依赖本模块，避免各服务重复编写基础查询。
+公共实体的持久层模块：存放 md-common-pojo 中核心实体（User、Org 等）的 MyBatis-Flex Mapper 接口与 XML。凡是需要直接访问用户/组织表的服务都依赖本模块，避免各服务重复编写基础查询。
 
 Maven 依赖：`md-common-pojo`、`md-db-mybatis-flex`、`md-mvc-flex`（均来自 md-public / mdp-base）。
 
@@ -24,10 +24,10 @@ Maven 依赖：`md-common-pojo`、`md-db-mybatis-flex`、`md-mvc-flex`（均来�
 
 ```mermaid
 flowchart LR
-    BM["BaseMapper&lt;T&gt;<br/>(mybatis-flex-core)<br/>单表 CRUD/分页/关联查询"] --> SM["SuperMapper&lt;T&gt;<br/>(md-mvc-flex)<br/>空接口，统一类型标记"] --> UM["UserMapper<br/>(md-common-dao)<br/>@Repository + 自定义 SQL"]
+    UM["UserMapper<br/>(md-common-dao)<br/>@Repository + 自定义 SQL"] --> SM["SuperMapper&lt;T&gt;<br/>(md-mvc-flex)<br/>空接口，统一类型标记"] --> BM["BaseMapper&lt;T&gt;<br/>(mybatis-flex-core)<br/>单表 CRUD/分页/关联查询"]
 ```
 
-`BaseMapper<T>` 已提供 `insert/update/deleteById/selectOneById/selectListByQuery/paginate` 及 `Relation` 关联查询能力，因此平台 Mapper 大多**零方法**，只在需要手写 SQL 时补方法。
+`BaseMapper<T>` 已提供 `insert/update/deleteById/selectOneById/selectListByQuery/paginate` 及 `Relation` 关联查询能力。平台定义了一个空的SuperMapper，目的是预留给后期便于扩展新方法，目前暂无新方法。
 
 ### 2.2 Mapper 清单
 
@@ -40,7 +40,7 @@ flowchart LR
 | `UserOrgRelMapper` | UserOrgRel | — |
 | `UserRoleRelMapper` | UserRoleRel | — |
 
-自定义 SQL 的写法约定（以 `UserMapper.java:29-39` 为例）：
+自定义 SQL 的写法约定（以 `UserMapper.java` 为例）：
 
 - **表名用常量拼接**：`@Update` 的 SQL 文本块中拼 `UserBase.TABLE_NAME`，表名变更只改实体一处；
 - **Java 文本块（`"""`）**：JDK 17 语法，保持 SQL 原始缩进可读；
@@ -48,15 +48,11 @@ flowchart LR
 
 ### 2.3 逻辑删除的手写 SQL 约定
 
-平台启用 MyBatis-Flex 逻辑删除（`deleted_at` 字段）。**QueryWrapper 方式查询会自动追加删除过滤，但注解/XML 手写 SQL 不会**，因此所有手写 `@Select` 都显式带上 `WHERE deleted_at = 0`（`UserMapper.java:61` 的 javadoc 专门注明"手写 SQL，已手动过滤 deleted_at = 0"）。
+平台启用 MyBatis-Flex 逻辑删除（`deleted_at` 字段）。**QueryWrapper 方式查询会自动追加删除过滤，但注解/XML 手写 SQL 不会**，因此所有手写 `@Select` 都显式带上 `WHERE deleted_at = 0`（`UserMapper.java` 的 javadoc 专门注明"手写 SQL，已手动过滤 deleted_at = 0"）。
 
-### 2.4 XML 预留位
+### 2.4 扫描机制
 
-`resources/mapper/` 下有 4 个 XML（SysUserMapper/SysOrgMapper/SysOrgUserRel/SysPositionMapper.xml），当前均为**空壳**，且 namespace 指向 `top.mddata.console.organization.mapper.*`（console 服务的包名）。它们是复杂 SQL 的预留位置：简单 SQL 走注解，多表大 SQL 建议迁移到 XML。
-
-### 2.5 扫描机制
-
-Mapper 接口本身不带 `@Mapper` 注解，而是靠 `@Repository` + md-common-config 中 `MybatisFlexConfiguration` 的扫描配置生效（`MybatisFlexConfiguration.java:24`）：
+Mapper 接口本身不带 `@Mapper` 注解，而是靠 `@Repository` + md-common-config 中 `MybatisFlexConfiguration` 的扫描配置生效（`MybatisFlexConfiguration.java`）：
 
 ```java
 @MapperScan(basePackages = UTIL_PACKAGE, annotationClass = Repository.class)
@@ -77,7 +73,7 @@ Mapper 接口本身不带 `@Mapper` 注解，而是靠 `@Repository` + md-common
 
 - **新增 Mapper**：`@Repository interface XxxMapper extends SuperMapper<Xxx>`，放入 `top.mddata` 包下即被扫描，无需其他注册。
 - **替换 SQL 实现**：注解 SQL 可平移进 XML（namespace 对齐接口全限定名），接口方法签名不变。
-- **数据权限**：查询走 QueryWrapper 时可被 `DataPermissionFilter`（md-db-mybatis-flex）自动拼接权限条件；手写 SQL 不参与。
+- **数据权限**：查询走 QueryWrapper 时可被 `DataPermissionFilter`自动拼接权限条件；手写 SQL 不参与。
 
 ## 5. 功能扩展建议
 
@@ -88,13 +84,10 @@ Mapper 接口本身不带 `@Mapper` 注解，而是靠 `@Repository` + md-common
 ## 6. 二次开发注意事项
 
 ::: warning @Repository 注解不能省
-扫描条件是 `annotationClass = Repository.class`，新 Mapper 忘加 `@Repository` 时不会报编译错误，而是运行期注入失败（NoSuchBeanDefinitionException），排查成本高。
+扫描条件是 `annotationClass = Repository.class`，新 Mapper 忘加 `@Repository` 时不会报编译错误，而是运行期报错，排查成本高。
 :::
 
 ::: warning 手写 SQL 必须自行处理逻辑删除与数据权限
 注解/XML SQL 绕过了 MyBatis-Flex 的逻辑删除处理器和数据权限方言，`deleted_at = 0` 需要手写；若涉及敏感表还需自行评估权限过滤，否则会出现"已删数据被统计进来"的隐性 bug。
 :::
 
-::: tip XML namespace 是历史遗留
-现有 4 个 XML 的 namespace 指向 console 服务的包名而非本模块接口，直接往这些 XML 里加语句不会绑定到 `top.mddata.common.mapper.*` 的接口上。新增 XML 时务必让 namespace 与接口全限定名一致。
-:::

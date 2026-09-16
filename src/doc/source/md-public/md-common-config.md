@@ -10,41 +10,15 @@ tag:
 
 ## 1. 模块定位
 
-平台各服务的 **Spring 装配层**（pom description："公共配置模块"）：Web MVC、上下文拦截、全局异常、消息(sms4j)、文件存储(x-file-storage)、MyBatis-Flex、WebSocket、Undertow、Actuator 安全、方法日志切面都在这里落地。
-
-Maven 依赖：`md-boot`、`md-log-starter`、`md-cache-key`、`md-common-pojo`、`md-db-mybatis-flex`（mdp-base/md-public）、`sa-token-spring-boot3-starter`、`sms4j-spring-boot-starter`、`x-file-storage`、`spring-boot-starter-websocket`、`mysql-connector-j` 等。
-
-::: info 不是 starter，靠组件扫描生效
-本模块 resources 下只有 `banner.txt`，**没有** `spring.factories` / `AutoConfiguration.imports`。它依赖各服务启动类的 `@SpringBootApplication` 扫描 `top.mddata` 包生效——这也是 `MybatisFlexConfiguration` 用 `@MapperScan(basePackages = UTIL_PACKAGE)` 的原因。
-:::
+平台各服务的 **Spring 装配层**：Web MVC、上下文拦截、全局异常、消息(sms4j)、文件存储(x-file-storage)、MyBatis-Flex、WebSocket、Undertow、Actuator 安全、方法日志切面都在这里落地。
 
 ## 2. 源码解读
 
 包根 `top.mddata.common`，按 `configuration/`（@Configuration 类）、`configurer/`（WebMvcConfigurer）、`interceptor/`（拦截器/过滤器）、`aspect/`（切面）、`file/`、`undertow/` 组织。
 
-### 2.1 装配全景
+### 2.1 mode=cloud/boot 双拦截器互斥机制（核心）
 
-```mermaid
-flowchart TB
-    subgraph configuration
-        SAC["SystemAutoConfiguration<br/>@ConditionalOnWebApplication<br/>注册 AlwaysConfigurer + MethodLogAspect<br/>@EnableConfigurationProperties(Msg/System)"]
-        WC["WebConfiguration extends BaseConfig<br/>@EnableConfigurationProperties(Ignore)<br/>按 mode 装配上下文拦截器"]
-        MFC["MybatisFlexConfiguration<br/>extends MyMybatisFlexConfiguration<br/>@MapperScan(annotationClass=Repository)"]
-        EC["ExceptionConfiguration<br/>extends AbstractGlobalExceptionHandler<br/>@RestControllerAdvice"]
-        MSG["MsgAutoConfiguration<br/>@ConditionalOnBean(SmsReadConfig)"]
-        FSC["FileStorageConfiguration<br/>LocalPlusExtFileStorage"]
-        WSC["WebSocketConfig<br/>@EnableWebSocket"]
-        ASC["ActuatorSecurityConfig<br/>保护 /actuator/**"]
-    end
-    SAC --> AC["AlwaysConfigurer<br/>→ NotAllowWriteInterceptor(order=MIN)"]
-    SAC --> MLA["MethodLogAspect"]
-    WC -->|mode=cloud 缺省| HTL["HeaderThreadLocalConfigurer<br/>→ HeaderThreadLocalInterceptor(order=-20)"]
-    WC -->|mode=boot| TCF["TokenContextFilterConfigurer<br/>→ TokenContextFilter(order=-20)"]
-```
-
-### 2.2 mode=cloud/boot 双拦截器互斥机制（核心）
-
-`WebConfiguration.java:41-51` 用两个互斥的 `@ConditionalOnProperty` 装配上下文拦截器，条件都是 `mdp.system.mode`：
+`WebConfiguration.java` 用两个互斥的 `@ConditionalOnProperty` 装配上下文拦截器，条件都是 `mdp.system.mode`：
 
 | mode | 装配 | 用户信息来源 |
 | --- | --- | --- |
@@ -58,17 +32,17 @@ flowchart TB
 - `parseApplication`：从 header/参数取 appId 写入上下文；
 - `parseToken`：先用 `IgnoreProperties.isIgnoreUser(method, uri)` 判定免登录白名单，命中则跳过会话解析。其 `auth` 鉴权处理器目前为 **TODO 空实现**（uri 级鉴权在单体版尚未启用）。
 
-### 2.3 其他关键类
+### 2.2 其他关键类
 
 | 类 | 说明 |
 | --- | --- |
 | `SystemAutoConfiguration` | `@EnableConfigurationProperties({MsgProperties, SystemProperties})`；无条件注册 `MethodLogAspect`（注释说明：不按 recordLog 条件注册，因 SystemProperties 是 @RefreshScope 代理，运行期开关可被 Nacos 热刷新） |
 | `WebConfiguration` | 继承 md-boot 的抽象类 `BaseConfig`（获得 4 个日期 Converter 注册）；`addViewControllers` 把 `/` 转发到 `/index` |
 | `MybatisFlexConfiguration` | 继承 md-db-mybatis-flex 的抽象类 `MyMybatisFlexConfiguration`，补上 `@MapperScan`；数据库 id 策略、审计、逻辑删除等能力全部来自父类 |
-| `ExceptionConfiguration` | 继承 md-boot 的抽象类 `AbstractGlobalExceptionHandler`（20+ @ExceptionHandler），加 `@RestControllerAdvice` 生效。**空类体**——定制异常响应时在此覆写对应 handler |
+| `ExceptionConfiguration` | 继承 md-boot 的抽象类 `AbstractGlobalExceptionHandler`。 |
 | `MsgAutoConfiguration` | `@ConditionalOnBean(SmsReadConfig)`：应用提供了 sms4j 的动态配置读取 Bean 才装配；`@EventListener(ContextRefreshedEvent)` 时 `SmsFactory.createSmsBlend` 批量创建短信实例 |
 | `FileStorageConfiguration` | 取 x-file-storage 的 `localPlus` 第一个配置，复制后把 platform 改为 `localPlusExt`，注册 `LocalPlusExtFileStorage`（重写 `generatePresignedUrl`，返回 domain+fileKey 的完整访问地址） |
-| `ActuatorSecurityConfig` | Spring Security 6：BCrypt PasswordEncoder、内存用户（角色 ACTUATOR_ADMIN）、`SecurityFilterChain` 仅要求 `/actuator/**` 具备该角色，其余 permitAll，httpBasic 认证 |
+| `ActuatorSecurityConfig` | 解决 /actuator 端点能直接访问导致敏感数据泄露的问题 |
 | `WebSocketConfig` | `@EnableWebSocket` + `ServerEndpointExporter`（使 `@ServerEndpoint` 生效） |
 | `UndertowServerFactoryCustomizer` | 为 WebSocket 预置 XnioWorker/ByteBufferPool，消除 Undertow 启动告警；`@ConditionalOnClass(Undertow.class)` 才注册 |
 | `NotAllowWriteInterceptor` | 演示环境保护：`mdp.system.not-allow-write=true` 时，按 `not-allow-write-list` 中的 `Map<HTTP方法, URI列表>` Ant 匹配，命中抛 `BizException(-1, "演示环境禁止新增、修改、删除…")`；由 `AlwaysConfigurer` 以 `order=Integer.MIN_VALUE` 注册（最先执行） |

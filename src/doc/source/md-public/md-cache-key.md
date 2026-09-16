@@ -44,7 +44,7 @@ public class AccessTokenCkBuilder implements CacheKeyBuilder {
 ### 2.2 命名规范（CacheKeyBuilder javadoc 约定）
 
 ```
-[前缀:][租户ID:]表名[:字段名][:唯一键值]
+[前缀:]业务类型[:业务字段][:业务值]
 ```
 
 冒号分隔；`CacheKeyBuilder` 提供 `key(uniques...)` → `CacheKey`、`hashKey()`/`hashFieldKey(field, ...)` → `CacheHashKey`、`getPattern()`（`*:{table}:*` 通配，用于批量删除）。全局前缀由 `CacheKeyBuilder.Key.setPrefix(...)` 静态设置（区分项目/环境）。

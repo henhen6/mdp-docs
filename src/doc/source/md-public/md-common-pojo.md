@@ -10,9 +10,11 @@ tag:
 
 ## 1. 模块定位
 
-平台公共的数据模型模块（pom description："公共pojo模块"），存放各业务服务共用的**实体、DTO、VO、枚举、常量、配置属性类**。它是 md-public 中被依赖最多的模块：md-common-dao、md-common-config、md-enumeration-scanning 以及各业务服务都直接或间接依赖它。
+平台公共的数据模块，存放各业务服务共用的**实体、DTO、VO、枚举、常量、配置属性类**。二开时，频繁被各服务使用的公用表实体类也可以加进来。
 
-Maven 依赖：`md-core`、`md-util`（mdp-base）、`mybatis-flex-core`、`spring-cloud-context`（@RefreshScope）、`sop-service-support`（@Open 开放接口注解）。
+它是 md-public 中被依赖最多的模块：md-common-dao、md-common-config、md-enumeration-scanning 以及各业务服务都直接或间接依赖它。
+
+Maven 依赖：`md-core`、`md-util`、`mybatis-flex-core`、`spring-cloud-context`、`sop-service-support`。
 
 包根：`top.mddata.common`，下分 `entity/`、`entity/base/`、`dto/`、`vo/`、`enumeration/`、`constant/`、`properties/` 七个包。
 
@@ -24,16 +26,16 @@ Maven 依赖：`md-core`、`md-util`（mdp-base）、`mybatis-flex-core`、`spri
 
 ```mermaid
 flowchart LR
-    SE["SuperEntity&lt;Long&gt;<br/>(md-core)"] --> UB["UserBase<br/>entity/base/ 代码生成层<br/>TABLE_NAME = mdc_user"]
-    UB --> U["User<br/>entity/ 手写 DO 层<br/>@Table + 关联字段"]
-    TE["TreeEntity<br/>(md-core)"] --> OB["OrgBase<br/>entity/base/"]
-    OB --> O["Org<br/>entity/"]
+    UB["UserBase<br/>entity/base/ 代码生成层<br/>TABLE_NAME = mdc_user"] --> SE["SuperEntity&lt;T&gt;<br/>(md-core)"]
+    U["User<br/>entity/ 手写 DO 层<br/>@Table + 关联字段"] --> UB
+    OB["OrgBase<br/>entity/base/"] --> TE["TreeEntity<br/>(md-core)"]
+    O["Org<br/>entity/"] --> OB
 ```
 
 - **生成层** `entity/base/*Base.java`：由 md-codegen 根据数据库表生成，只含表字段与 `TABLE_NAME` 常量。**重新生成代码时会被覆盖**，不要在此添加业务字段。
-- **DO 层** `entity/*.java`：手写层，类注释明确"可以在关联查询时再次添加字段，重新生成代码时忽略此文件"。`@Table(UserBase.TABLE_NAME)` 绑定表名，关联查询字段加 `@Column(ignore = true)` 避免参与 SQL。
+- **DO 层** `entity/*.java`：手写层，可以在关联查询时再次添加字段，重新生成代码时忽略此文件。`@Table(UserBase.TABLE_NAME)` 绑定表名，关联查询字段加 `@Column(ignore = true)` 避免参与 SQL。
 
-以 `User.java` 为例（`entity/User.java:26-40`）：
+以 `User.java` 为例（`entity/User.java`）：
 
 ```java
 @Table(UserBase.TABLE_NAME)
@@ -81,13 +83,14 @@ public class User extends UserBase {
 
 ### 2.4 枚举（enumeration/）
 
-统一规范：**实现 `BaseEnum<T>`（md-core）+ 类上 `@Schema(title, description)` + 提供 `match`/`of` 静态工厂**。以 `StateEnum` 为例（`enumeration/StateEnum.java:17-25`）：
+统一规范：**实现 `BaseEnum<T>`（md-core）+ 类上 `@Schema(title, description)` + 提供 `match`/`of` 静态工厂**。以 `StateEnum` 为例（`enumeration/StateEnum.java`）：
 
 ```java
 @Schema(title = "StateEnum", description = "状态-枚举")
 public enum StateEnum implements BaseEnum<Boolean> {
     ENABLE(true, 1, "1", "启用"),
     DISABLE(false, 0, "0", "禁用");
+}
 ```
 
 同一枚举同时持有 bool/integer/string 三种 code 形态，方便与前端、数据库不同字段类型互转。
@@ -171,7 +174,7 @@ public enum StateEnum implements BaseEnum<Boolean> {
 
 ## 5. 功能扩展建议
 
-- **给核心表加字段**：改数据库 → 重新生成 `*Base`（md-codegen 会保留 DO 层）→ DO 层加关联/扩展字段。切勿直接改 `entity/base/` 下的生成类。
+- **给核心表加字段**：改数据库 → 重新生成 `*Base`→ DO 层加关联/扩展字段。切勿直接改 `entity/base/` 下的生成类。
 - **新增免登录接口**：优先在 URI 设计上使用 `/anno/` 前缀（base-uri 已放行）；确实无法调整路径时再往 `mdp.ignore.any-user` 加配置，避免改动内置 baseUri。
 - **调整验证码策略**：改 `mdp.msg.sms/email.*` 即可（type/length/过期时间），支持 Nacos 热刷新，无需改代码。
 

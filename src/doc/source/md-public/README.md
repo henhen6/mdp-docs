@@ -11,7 +11,7 @@ tag:
 
 ## 1. 工程定位
 
-`md-public` 位于 `mdp-apps/` 下（`pom.xml` description 为"业务公共模块"），是**平台所有业务服务共同依赖的公共层**：console-server、workbench-server、open-server 等服务都建立在这五个模块之上。它承载了三类内容：
+`md-public` 位于 `mdp-apps/` 下，是**平台所有业务服务共同依赖的公共层**：boot-server、console-server、workbench-server、open-server 等服务都建立在这五个模块之上。它承载了三类内容：
 
 - **公共数据模型**：用户/组织等核心实体、通用 DTO、枚举、常量（md-common-pojo）
 - **公共持久层**：核心实体的 Mapper（md-common-dao）与缓存 key 规范（md-cache-key）
@@ -99,9 +99,9 @@ com.mybatisflex.core.BaseMapper<T>
 | `MsgProperties` | `mdp.msg` | 短信/邮件验证码类型、长度、过期时间 |
 | `IgnoreProperties` | `mdp.ignore` | 免登录/免鉴权 URI 白名单 |
 
-**架构切换**：`mdp.system.mode=cloud`（微服务，网关解析 token 后经请求头传递）与 `boot`（单体，服务端直接解析 sa-token 会话）决定装配哪套上下文拦截器，二者互斥，详见 [md-common-config](md-common-config.md)。
+**架构切换**：`mdp.system.mode=cloud`与 `boot`决定装配哪套上下文拦截器，二者互斥，详见 [md-common-config](md-common-config.md)。
 
-**缓存机制**：`CacheKeyBuilder`（md-core 定义规范）→ `md-cache-key` 各 Builder（表名常量 + 过期时间）→ `CacheKey`/`CacheHashKey`，详见 [md-cache-key](md-cache-key.md)。
+**缓存机制**：`CacheKeyBuilder`→ `md-cache-key` 各 Builder→ `CacheKey`/`CacheHashKey`，详见 [md-cache-key](md-cache-key.md)。
 
 **枚举机制**：实现 `BaseEnum` + 类上 `@Schema` + 放在 `mdp.system.enumPackage` 配置的包下 → `EnumService` 启动自动收集为下拉选项，详见 [md-enumeration-scanning](md-enumeration-scanning.md)。
 
