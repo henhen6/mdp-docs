@@ -30,7 +30,7 @@ top.mddata.base.boot
 
 ### 2.1 BaseConfig（抽象，需继承）
 
-注册 4 个字符串→日期时间 Converter Bean（`dateConvert`/`localDateConverter`/`localTimeConverter`/`localDateTimeConverter`，见 `BaseConfig.java:27-52`），解决 GET 参数多格式日期解析。在 MDP 中由 md-public 的 `WebConfiguration extends BaseConfig` 落地。
+注册 4 个字符串→日期时间 Converter Bean，解决 GET 参数多格式日期解析。在 MDP 中由 md-public 的 `WebConfiguration extends BaseConfig` 落地。
 
 ### 2.2 @LoginUser 参数解析链
 

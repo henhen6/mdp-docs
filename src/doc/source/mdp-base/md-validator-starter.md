@@ -36,10 +36,10 @@ top.mddata.base.validator
 
 ```mermaid
 flowchart LR
-    A["DTO 字段<br/>@NotNull @Size(max=20)"] --> B["IConstraintExtract<br/>提取注解元数据"]
-    B --> C["IConstraintConverter 家族<br/>按注解类型路由转换"]
-    C --> D["FieldValidatorDesc<br/>（字段级规则描述）"]
-    D --> E["FormValidatorController<br/>接口返回"]
+    B["IConstraintExtract<br/>提取注解元数据"] --> A["DTO 字段<br/>@NotNull @Size(max=20)"]
+    C["IConstraintConverter<br/>按注解类型路由转换"] --> B
+    D["FieldValidatorDesc<br/>字段级规则描述"] --> C
+    E["FormValidatorController<br/>接口返回"] --> D
 ```
 
 ## 3. 可配置参数

@@ -94,7 +94,7 @@ mdp:
 
 - **换缓存介质**：实现 `CacheOps`（必要时加 `CachePlusOps`）并注册为 Bean，框架内所有依赖 `CacheOps` 的代码（如滑块验证码 `cache-type=redis` 分支）自动切换。
 - **多级缓存**：装饰 `RedisOpsImpl`，先查 Caffeine 再查 Redis；注意失效广播需自行实现。
-- **key 规范**：新缓存 key 不要手拼字符串，参考 `md-cache-key` 模块用 `CacheKeyBuilder` 生成（命名规范 `[前缀:][租户ID:]表名[:字段名][:唯一键值]`）。
+- **key 规范**：新缓存 key 不要手拼字符串，参考 `md-cache-key` 模块用 `CacheKeyBuilder` 生成（命名规范 `[前缀:]业务类型[:业务字段][:唯一键值]`）。
 
 ## 6. 二次开发注意事项
 

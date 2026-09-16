@@ -10,7 +10,7 @@ tag:
 
 ## 1. 模块定位
 
-Web 三层基类模块（"super" 体系），坐标 `top.mddata.base:md-mvc-flex`。定义 Controller/Service/Mapper 的通用基类，让一个业务模块只需继承即可获得标准 CRUD+分页能力。依赖 md-core、md-db-mybatis-flex。配合 md-codegen 生成的代码使用。
+Web 三层架构基类模块，坐标 `top.mddata.base:md-mvc-flex`。定义 Controller/Service/Mapper 的通用基类，让一个业务模块只需继承即可获得标准 CRUD+分页能力。依赖 md-core、md-db-mybatis-flex。配合 md-codegen 生成的代码使用。
 
 ## 2. 源码解读
 
@@ -33,13 +33,12 @@ top.mddata.base.mvcflex
 ### 2.1 三层基类继承链
 
 ```mermaid
-flowchart TB
-    BC["BaseController（接口）"] --> SC["SuperController&lt;S extends SuperService&lt;Entity&gt;, Entity, ...&gt;"]
-    FXS["mybatis-flex IService / ServiceImpl"] --> SS["SuperService&lt;T&gt;"]
-    SS --> SSI["SuperServiceImpl&lt;M extends SuperMapper&lt;T&gt;, T&gt;"]
-    FXM["mybatis-flex BaseMapper&lt;T&gt;"] --> SM["SuperMapper&lt;T&gt;"]
-    SC -->|"注入"| SSI
-    SSI -->|"持有"| SM
+flowchart BT
+    SC["SuperController"] -->|"继承"| BC["BaseController"]
+    SSI["SuperServiceImpl"] -->|"继承"| SS["SuperService"]
+    SM["SuperMapper"] -->|"继承"| FXM["BaseMapper"]
+    SC -->|"注入"| SS
+    SSI -->|"注入"| SM
 ```
 
 业务侧写法（md-codegen 生成的也是这个形态）：

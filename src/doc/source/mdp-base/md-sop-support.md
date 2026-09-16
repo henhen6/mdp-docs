@@ -10,7 +10,7 @@ tag:
 
 ## 1. 模块定位
 
-SOP 开放平台网关支持模块（源自 gitee sop 项目改造，包名保留 `com.gitee.sop.support`），坐标 `top.mddata.base:md-sop-support`，下辖 `sop-service-support`（核心）与 `sop-spring-boot-starter`（装配）。职责：把 MDP 的接口以**开放平台 API** 形式注册到 SOP 网关——第三方经网关（鉴权/签名/加解密）调用业务服务的 Dubbo 接口。是 [mdp-sdk](../mdp-sdk/README.md) 的服务端对侧。
+SOP 开放平台网关支持模块，坐标 `top.mddata.base:md-sop-support`，包含 `sop-service-support`和  `sop-spring-boot-starter`。职责：把 MDP 的接口以**开放平台 API** 形式注册到 SOP 网关——第三方经网关（鉴权/签名/加解密）调用业务服务的 Dubbo 接口。
 
 ## 2. 源码解读
 
@@ -32,7 +32,7 @@ com.gitee.sop.support
 
 ```mermaid
 flowchart LR
-    A["业务实现类<br/>@DubboService + @Open(\"user.getById\")"] --> B["ApiRegisterRunner<br/>启动扫描"]
+    A["md-api-service<br/>@DubboService + @Open('user.getById')"] --> B["ApiRegisterRunner<br/>启动扫描"]
     B --> C["ApiRegister<br/>组装 ApiConfig（method/version/参数）"]
     C -->|"@DubboReference<br/>ApiRegisterService"| D["SOP 网关<br/>sop-gateway-server"]
     E["第三方应用"] -->|"HTTP + 签名"| D
@@ -45,7 +45,7 @@ flowchart LR
 
 ### 2.2 装配条件
 
-`SopAutoConfiguration` 的装配前提是 `dubbo.enabled`（默认 true）。spring.factories 与 AutoConfiguration.imports **双注册**（兼容 Boot 2/3 两个时代的加载机制）。
+`SopAutoConfiguration` 的装配前提是 `dubbo.enabled`（默认 true）。
 
 ## 3. 可配置参数
 
@@ -76,8 +76,8 @@ flowchart LR
 
 ## 6. 二次开发注意事项
 
-::: warning 源码副本的升级问题
-与 md-sa-token 同理，本模块是 gitee sop 的改造副本（包名 `com.gitee.sop.support`），升级上游需手动 diff；注意保留 MdpBizMsgCrypt（AES 加解密与 mdp-sdk-core 的实现必须保持算法一致）。
+::: warning 签名算法问题
+注意保留 MdpBizMsgCrypt（AES 加解密与 mdp-sdk-core 的实现必须保持算法一致）。
 :::
 
 ::: warning @Open 接口即对外契约

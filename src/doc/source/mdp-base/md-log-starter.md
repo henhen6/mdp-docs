@@ -73,7 +73,7 @@ flowchart LR
 
 | 扩展点 | 机制 | 说明 |
 | --- | --- | --- |
-| `SysLogEvent` 事件监听 | `@EventListener` | **DB 模式的唯一落库通道**：应用写监听器把 `OptLogDTO` 持久化（MDP 平台在 console 服务中就是这么做的） |
+| `SysLogEvent` 事件监听 | `@EventListener` | **DB 模式的唯一落库通道**：应用写监听器把 `OptLogDTO` 持久化 |
 | `SysLogAspect` Bean | `@ConditionalOnMissingBean` | 替换采集逻辑（如追加自定义字段） |
 | `SysLogListener` Bean | `@ConditionalOnMissingBean` | 替换默认打印行为 |
 | `@RequestLog.request()` SpEL | 注解属性 | 不改代码扩展日志描述 |

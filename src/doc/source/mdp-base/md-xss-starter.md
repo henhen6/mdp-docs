@@ -44,7 +44,7 @@ top.mddata.base.xss
 | `mdp.xss.request-body-enabled` | false | JSON body 反序列化清洗开关 |
 | `mdp.xss.order` | 1 | Filter 注册顺序 |
 | `mdp.xss.patterns` | ["/*"] | 拦截的 URL 模式 |
-| `mdp.xss.ignore-paths` | favicon.ico、/**/doc.html、/v2/**、/actuator/** 等 16 条 | 放行路径（含 `/**/noxss/**`） |
+| `mdp.xss.ignore-paths` | favicon.ico、**/doc.html、/v2/**、/actuator/** 等 16 条 | 放行路径（含 `/**/noxss/**`） |
 | `mdp.xss.ignore-param-values` | ["noxss"] | 参数值白名单：值等于这些字符串时跳过清洗（富文本场景约定值） |
 
 ## 4. 扩展点
@@ -57,14 +57,14 @@ top.mddata.base.xss
 
 | 想做什么 | 推荐做法 |
 |---|---|
-| 富文本内容提交（含 HTML） | 前端把字段值以约定值包裹/使用 `noxss` 约定路径，并在存储层做白名单过滤（如 antisamy），**不要直接全局关 XSS** |
+| 富文本内容提交（含 HTML） | 前端把字段值以约定值包裹使用 `/noxss` 约定路径，并在存储层做白名单过滤（如 antisamy），**不要直接全局关 XSS** |
 | JSON body 也清洗 | `request-body-enabled=true`，回归测试 JSON 反序列化（特殊字符）是否正常 |
 | 第三方回调接口跳过 | 回调地址加进 `ignore-paths`，避免清洗破坏签名原文 |
 
 ## 6. 二次开发注意事项
 
 ::: warning 清洗会破坏签名/原文
-回调验签、开放平台接口的报文如果被清洗，验签必失败。第三方回调、webhook 路径要显式加进 `ignore-paths`。
+回调验签、开放平台接口的报文如果被清洗，验签必失败。第三方回调要显式加进 `ignore-paths`。
 :::
 
 ::: warning request-body-enabled 默认关

@@ -12,22 +12,22 @@ tag:
 
 ## 1. 模块定位
 
-真正交付给第三方的 API 类库：基于 mdp-sdk-core，按业务域封装 mdp-openapi 服务端 `@Open` 接口。
+真正交付给第三方的 API 类库：基于 mdp-sdk-core，按业务域封装 mdp-api 服务端 `@Open` 接口。
 
 - Maven 坐标：`top.mddata.sdk:mdp-simple-sdk`
-- 依赖：仅 `mdp-sdk-core`（测试期 junit/slf4j/logback）
+- 依赖：仅 `mdp-sdk-core`
 - 包根：`top.mddata.sdk.simple`
 
 ## 2. 源码解读
 
 ### 2.1 三件套包约定
 
-`package-info.java` 约定了包语义，每个业务接口由三个类组成：
+每个业务接口由三个类组成：
 
 ```mermaid
 flowchart LR
-    A["api/<br/>XxxApi extends BaseParam&lt;Req,Resp&gt;<br/>重写 method()"] --> B["request/<br/>XxxDto / XxxQuery<br/>业务入参"]
-    A --> C["response/<br/>XxxResp<br/>业务返回"]
+    A["api<br/>XxxApi extends BaseParam&lt;Req,Resp&gt;<br/>重写 method()"] --> B["request<br/>XxxDto / XxxQuery<br/>业务入参"]
+    A --> C["response<br/>XxxResp<br/>业务返回"]
 ```
 
 | 包 | 职责 | 命名习惯 |
@@ -135,24 +135,19 @@ if (result.isSuccess()) {
    - 异步回调：`api.setNotifyUrl(...)`（参照 `UserTest.testSave`）
 
 ::: tip 服务端先行
-SDK 只是壳，新增接口需先在服务端 mdp-openapi 模块用 `@Open` 发布（见 md-sop-support 文档），method 值两侧必须完全一致。
+SDK 只是壳，新增接口需先在服务端 mdp-api 模块用 `@Open` 发布（见 md-sop-support 文档），method 值两侧必须完全一致。
 :::
 
 ## 5. 功能扩展建议
 
-- **封装更高层的门面**：ISV 可再包一层自己的 Facade（缓存 accessToken、自动重试、异常转译），SDK 本身不内置 token 过期自动刷新，`AccessTokenGetDto.forceRefresh` 可强制换新
+- **封装更高层的门面**：第三方应用 可再封装自己的 Facade（缓存 accessToken、自动重试、异常转译），SDK 本身不内置 token 过期自动刷新，`AccessTokenGetDto.forceRefresh` 可强制换新
 - **按域拆分交付**：如果只给第三方开放部分能力，可按 `api/{域}` 包裁剪交付，各域之间无相互依赖
 - **新增业务域**：直接新建 `api/xxx`、`request/xxx`、`response/xxx` 三个包，遵循既有命名即可，无需改动 core
 
 ## 6. 二次开发注意事项
 
-::: warning 测试代码含真实测试环境密钥
-`BaseTest.java` 内明文写了测试环境的 appKey/appSecret/私钥。二开时：不要把生产密钥写进测试类；对外发布 SDK 前清理或占位符化这些常量。
-:::
-
 ::: warning method 值是协议的一部分
 `method()` 字符串与服务端 `@Open` 注解 value 强耦合，改名等同破坏兼容。已发布给第三方的 API 类不要改 method 值，如需升级用 `version()`/`setVersion()` 走多版本。
 :::
 
-- 入参 DTO 字段名即 `bizContent` JSON 的字段名，与服务端接收对象字段必须一致（fastjson2 序列化，下划线风格不互通）
-- `demo.download` 的示例类 `DemoFileDownloadApi` 目前继承的是普通 `BaseParam`，未走 `DownloadAware` 分支；实现真实下载接口时应继承 `DownloadRequest`
+- 入参 DTO 字段名即 `bizContent` JSON 的字段名，与服务端接收对象字段必须一致

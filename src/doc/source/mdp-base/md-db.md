@@ -29,7 +29,7 @@ top.mddata.base.db
 构造注入 `DatabaseProperties`，核心是 `getHuToolUidGenerator()`（`DbConfiguration.java:36-68`，`@ConditionalOnMissingBean`）——按 `mdp.database.id-type` 三分支装配：
 
 ```mermaid
-flowchart TB
+flowchart BT
     A["mdp.database.id-type"] -->|HU_TOOL<br/>（默认，单机/固定集群）| B["HuToolUidGenerator<br/>读 hutool-id.worker-id / data-center-id<br/>无需建表"]
     A -->|DEFAULT| C["DefaultUidGenerator<br/>百度原生实现<br/>worker_node 表分配工作节点"]
     A -->|CACHE| D["CachedUidGenerator<br/>RingBuffer 缓存<br/>高吞吐（详见 md-db-uid）"]
@@ -82,10 +82,6 @@ flowchart TB
 | 多数据库 | `DatabaseIdProvider` 在 md-db-mybatis-flex 注册（Oracle/MySQL/SQLServer），新库种在那里加 |
 
 ## 6. 二次开发注意事项
-
-::: warning is-data-scope 与 flex.data-scope 是两个开关
-`mdp.database.is-data-scope`（默认 true）只是属性标记；真正让数据权限切面装配的是 `mdp.database.flex.data-scope`（默认 **false**）。开数据权限时配后者，别只配前者白等半天。
-:::
 
 ::: warning HU_TOOL 策略集群会撞 ID
 `worker-id`/`data-center-id` 默认都是 0，集群部署时**每个实例必须配置不同值**，否则雪花 ID 重复。动态扩容频繁的集群用 DEFAULT 或 CACHE（依赖 worker_node 表）。

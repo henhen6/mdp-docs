@@ -10,11 +10,11 @@ tag:
 
 ## 1. 模块定位
 
-微服务公共配置模块，坐标 `top.mddata.base:md-cloud-starter`。覆盖三块：OpenFeign 定制（header 透传、Sentinel 融合、专属日志）、RestTemplate 增强、**灰度发布**（按版本元数据路由）。单体应用不引入（`md-all-cloud` = `md-all-boot` + 本模块）。
+微服务公共配置模块，坐标 `top.mddata.base:md-cloud-starter`。覆盖三块：OpenFeign 定制（header 透传、Sentinel 融合、专属日志）、RestTemplate 增强、**灰度发布**。
 
 ## 2. 源码解读
 
-```
+```shell
 top.mddata.base.cloud
 ├── config/
 │   ├── OpenFeignAutoConfiguration.java          # Feign 定制装配（imports 注册）
@@ -40,7 +40,7 @@ org.springframework.cloud.openfeign.MyFeignClientsRegistrar  # ⚠️ 覆写官�
 
 ### 2.2 灰度发布
 
-`GrayscaleConfig`（默认开启，`GrayscaleConfig.java:22`）→ `@LoadBalancerClients(defaultConfiguration = GrayscaleLbConfig.class)` → `GrayscaleVersionRoundRobinLoadBalancer`：按服务实例的版本元数据（注册中心 metadata）做版本路由，实现"指定流量打到指定版本实例"。
+`GrayscaleConfig`→ `@LoadBalancerClients(defaultConfiguration = GrayscaleLbConfig.class)` → `GrayscaleVersionRoundRobinLoadBalancer`：按服务实例的版本元数据（注册中心 metadata）做版本路由，实现"指定流量打到指定版本实例"。
 
 ```mermaid
 flowchart LR
@@ -52,7 +52,7 @@ flowchart LR
 
 ### 2.3 MyFeignClientsRegistrar
 
-放在 `org.springframework.cloud.openfeign` 包下**覆写官方类**（与 Spring Boot 的同名类加载顺序博弈），用于增强 `@EnableFeignClients` 的注册逻辑——这是侵入性最强的定制点。
+放在 `org.springframework.cloud.openfeign` 包下**覆写官方类**，用于增强 `@EnableFeignClients` 的注册逻辑——这是侵入性最强的定制点。
 
 ## 3. 可配置参数
 
@@ -66,7 +66,7 @@ flowchart LR
 
 - **`GrayscaleLbConfig`**：用 `@LoadBalancerClient(name="xxx", configuration=...)` 为特定服务覆盖负载均衡策略。
 - **`InfoFeignLoggerFactory`**：Feign 日志实现可替换（默认 slf4j，输出请求/响应摘要）。
-- **拦截器链**：`FeignAddHeaderRequestInterceptor` 可加业务 header（如租户标识）。
+- **拦截器链**：`FeignAddHeaderRequestInterceptor` 可加业务 header。
 
 ## 5. 功能扩展建议
 
@@ -80,7 +80,7 @@ flowchart LR
 ## 6. 二次开发注意事项
 
 ::: danger 包名侵入式定制
-`MyFeignClientsRegistrar` 放在 `org.springframework.cloud.openfeign` 包下覆写官方类，**升级 Spring Cloud 版本时官方类内部变化会让它静默失效**（无编译错误）。升级后必须验证：Feign 接口注册、header 透传、Sentinel 融合是否仍正常。
+`MyFeignClientsRegistrar` 放在 `org.springframework.cloud.openfeign` 包下覆写官方类，**升级 Spring Cloud 版本时官方类内部变化会让它失效**。升级后必须验证：Feign 接口注册、header 透传、Sentinel 融合是否仍正常。
 :::
 
 ::: warning 灰度默认开启

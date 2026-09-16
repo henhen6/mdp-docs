@@ -10,7 +10,9 @@ tag:
 
 ## 1. 模块定位
 
-PowerJob worker 定制 starter，坐标 `top.mddata.base:md-powerjob-worker-spring-boot-starter`，包名保留官方 `tech.powerjob.worker.autoconfigure`（源码副本式定制，仅两个类）。职责：装配 `PowerJobWorker`，让服务接入 PowerJob 调度平台（定时任务、工作流、MapReduce 任务）。
+PowerJob worker 定制 starter，坐标 `top.mddata.base:md-powerjob-worker-spring-boot-starter`，包名保留官方 `tech.powerjob.worker.autoconfigure`。职责：装配 `PowerJobWorker`，让服务接入 PowerJob 调度平台（定时任务、工作流、MapReduce 任务）。
+
+官方也有一个powerjob-worker-spring-boot-starter，但不兼容 springboot 3.x，所以就单独维护源码了。
 
 ## 2. 源码解读
 
@@ -20,7 +22,7 @@ tech.powerjob.worker.autoconfigure
 └── PowerJobProperties.java          # powerjob.worker.* 配置绑定
 ```
 
-注册机制是 **spring.factories + AutoConfiguration.imports 双注册**（同时兼容 Spring Boot 2 与 3 的自动配置加载机制）——这是它区别于其他 md-*-starter（仅 imports）的地方。
+
 
 ## 3. 可配置参数
 

@@ -10,7 +10,7 @@ tag:
 
 ## 1. 模块定位
 
-`md-bom` 与 `md-all` 都是**无 Java 代码的依赖管理模块**（md-all 下两个子模块各有一个仅用于占位的工具类），解决两个问题：
+`md-bom` 与 `md-all` 都是**无 Java 代码的依赖管理模块**，解决两个问题：
 
 | 模块 | Maven 坐标 | 职责 |
 | --- | --- | --- |
@@ -36,10 +36,6 @@ flowchart LR
     BOM --> CAPTCHA["验证码<br/>md-graphic-captcha-starter<br/>md-slider-captcha-starter"]
     BOM --> OTHER["其他<br/>md-codegen<br/>md-powerjob-worker-spring-boot-starter"]
 ```
-
-::: info Sa-Token 与 SOP 系列不在 md-bom 内
-`md-sa-token`（7 个子构件）与 `md-sop-support`（2 个子构件）的版本同样由 md-bom 管理（pom 中后段声明），它们是**定制源码副本**，详见 [md-sa-token](md-sa-token.md) 与 [md-sop-support](md-sop-support.md)。
-:::
 
 ### 2.2 md-all-boot：单体应用的「一键依赖」
 
@@ -69,10 +65,6 @@ md-mvc-flex、md-openapi3-starter、md-scan-starter、md-validator-starter、md-
 ```
 
 即微服务应用 = 单体全家桶 + Feign/负载均衡/灰度/Sentinel 支持（见 [md-cloud-starter](md-cloud-starter.md)）。
-
-### 2.4 占位工具类
-
-`md-all-boot` 与 `md-all-cloud` 各含一个类 `top.mddata.base.all.UaBootUtil` / `UaCloudUtil`，仅为让 Maven 打出 jar（而非纯 pom）的占位，无业务逻辑。
 
 ## 3. 可配置参数
 
@@ -119,5 +111,4 @@ md-mvc-flex、md-openapi3-starter、md-scan-starter、md-validator-starter、md-
 1. **md-bom 只管理版本，不引入依赖**：import md-bom 后仍必须显式声明需要的构件，常见误区是「import 了 BOM 类就能用」。
 2. **md-all-boot 是传递依赖大户**：引入后 `mvn dependency:tree` 会膨胀，排查类冲突时先确认是否由全家桶传递引入。
 3. **升级平台版本只改一处**：业务工程中用属性（如 `${mdp.version}`）统一引用 md-bom 版本，避免多个 md 构件版本不一致导致 NoSuchMethodError。
-4. **`.flattened-pom.xml` 是构建产物**：md-bom 目录下也有该文件，不要手工修改或提交变更。
-:::
+   :::

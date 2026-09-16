@@ -12,23 +12,62 @@ tag:
 
 **Sa-Token v1.45.0 官方源码的定制副本**（坐标 `top.mddata.base:*`，模块内含 7 个子模块）。官方 sa-token 无法满足"一个后端服务多个 SSO 前端客户端"的需求，因此以源码 fork 方式改造。承担 MDP 的全部认证职责：SSO 服务端（认证中心）、SSO 客户端、OAuth2 客户端。
 
-> ⚠️ **本模块不是 Maven 依赖，而是源码副本**：升级 sa-token 版本需手动 diff 合并，且定制过的方法签名与官方不一致，不能直接覆盖。模块根目录 `README.md` 有完整的升级注意事项，升级前必读。
+> ⚠️ **本模块是sa-token官方源码的升级版**：升级 sa-token 版本需手动 diff 合并，且定制过的方法签名与官方不一致，不能直接覆盖。模块根目录 `README.md` 有完整的升级注意事项，升级前必读。
 
 ## 2. 源码解读
 
+为何MDP要自己维护一套源码？直接用sa-token官方模块不行吗？
+
+- **官方 `sa-token-sso` 拆分为 sso-server 与 sso-client 两层**：
+  
+  1. **客户端最小化引入**——未使用 sa-token 技术栈的第三方系统（如若依），只需引入 `sa-token-sso-client-starter` 一个依赖即可对接 ticket 模式，不必拉进服务端代码；
+  2. **解决"一个后端服务多个 SSO 前端客户端"**——官方设计一个后端只绑一份 client 配置，而 MDP 单体版是一个后端对应多个前端（web-console / web-workbench / web-open），拆分后客户端核心配合 `sa-token.sso-clients` 多客户端 Map 才能按 clientId 区分请求来源。
+  
+  ```xml
+  <!-- 客户端还需要额外引入 Forest 请求工具 + sa-token-spring-boot4/3-starter 才行 -->
+  <dependency>
+      <groupId>cn.dev33</groupId>
+      <artifactId>sa-token-forest</artifactId>
+      <version>${sa-token.version}</version>
+  </dependency>
+  <dependency>
+      <groupId>cn.dev33</groupId>
+      <artifactId>sa-token-spring-boot4-starter</artifactId>
+      <version>${sa-token.version}</version>
+  </dependency>
+  ```
+  
+  
+  
+- **官方 `sa-token-oauth2` 拆出轻量 oauth2-client**：同理，未使用 sa-token 的客户端只需最小化引入 `sa-token-oauth2-client-starter` 即可对接 oauth2 认证（它仅依赖 sa-token-core，不带官方 oauth2 模块的其余重量）。
+
+  ```xml
+  <!-- 客户端还需要额外引入 Forest 请求工具才行 -->
+  <dependency>
+      <groupId>cn.dev33</groupId>
+      <artifactId>sa-token-forest</artifactId>
+      <version>${sa-token.version}</version>
+  </dependency>
+  ```
+
+  
+
 ### 2.1 子模块结构
 
-| 子模块 | 角色 | 关键内容 |
-|---|---|---|
-| sa-token-sso-core | SSO 公共内核（无 Spring 依赖） | `SaSsoTemplate`（消息分发）、`SaSsoMessage`/`SaSsoMessageHolder`（checkTicket/signout/logoutCall 等消息路由）、`TicketModel`、`SaSsoErrorCode`（30001~30008） |
-| sa-token-sso-server | SSO 服务端核心 | `SaSsoServerTemplate`/`SaSsoServerProcessor`/`SaSsoServerManager` |
-| sa-token-sso-server-starter | 服务端自动装配 | 绑定 `sa-token.sso-server` 配置 |
-| sa-token-sso-client | SSO 客户端核心（**定制重点**） | `SaSsoClientTemplate`/`SaSsoClientProcessor`：所有方法加 `clientId` 参数 |
-| sa-token-sso-client-starter | 客户端自动装配（含多客户端增强） | `SaSsoClientBeanRegister` 注册 `ssoClientsConfigMap` |
-| sa-token-oauth2-client | OAuth2 客户端（仅依赖 sa-token-core） | `SaOauth2ClientTemplate#buildServerAuthorizeUrl`、`Oauth2ClientConfig` 拼 6 个端点 |
-| sa-token-oauth2-client-starter | OAuth2 客户端自动装配 | 绑定 `sa-token.oauth2-client` |
+- **sa-token-sso-core** —— SSO 公共内核（无 Spring 依赖）
+- **sa-token-sso-server** —— SSO 服务端专用代码
+- **sa-token-sso-server-starter** —— 服务端自动装配：绑定 `sa-token.sso-server` 配置
+- **sa-token-sso-client** —— SSO 客户端专用代码，所有方法加 `clientId` 参数
+- **sa-token-sso-client-starter** —— 客户端自动装配
+- **sa-token-oauth2-client** —— OAuth2 客户端核心代码（仅依赖 sa-token-core）
+- **sa-token-oauth2-client-starter** —— OAuth2 客户端自动装配
 
-依赖关系：`sso-core` → 官方 `sa-token-core`、`sa-token-sign`；`sso-server`/`sso-client` → `sso-core`；starter 各自装配。**OAuth2 服务端不在本模块**（workbench-web 直接用官方 `cn.dev33:sa-token-oauth2` + 应用层 `OAuth2DataLoaderImpl` 从数据库加载 client）。
+依赖关系：
+
+- `sa-token-sso-core` → 官方 `sa-token-core`、`sa-token-sign`；
+- `sa-token-sso-server`/`sa-token-sso-client` → `sa-token-sso-core`；starter 各自装配。
+
+**OAuth2 服务端不在本模块**（workbench-web 直接用官方 `cn.dev33:sa-token-oauth2` + 应用层 `OAuth2DataLoaderImpl` 从数据库加载 client）。
 
 ### 2.2 核心改造：多 clientId
 
@@ -101,9 +140,7 @@ sequenceDiagram
 官方 sa-token 发新版后**不能直接替换依赖**——本模块是源码副本，`SaSsoClientProcessor`/`SaSsoClientTemplate` 的 `clientId` 参数是定制签名，与官方不一致。合并流程：diff 官方新源码 → 保留 README 第 3 节列出的全部定制点 → 核验多客户端 Bean 注入顺序（starter 用 `@PostConstruct` 保证"先默认配置、后多客户端配置"）。版本号由 mdp-parent 的 `<sa-token.version>` 统一管理。
 :::
 
-::: warning is-check-sign=false 只能本地调试
-关闭签名校验时启动会输出 error 级警告（定制行为）。生产环境必须开启签名并妥善保管 secret-key；secretKey 优先级：SSO 配置 > sign 模块全局配置。
-:::
+
 
 ::: warning 修改认证相关代码的安全影响
 本模块是全平台认证基石：动 `SaSsoClientTemplate`/`SaSsoServerTemplate` 的任何签名都会同时影响服务端与所有客户端（含外部已接入的若依等系统）。修改前务必：① 评估存量客户端兼容性；② ticket 模式与 oauth2 模式回归两条链路；③ 通知已接入的第三方。

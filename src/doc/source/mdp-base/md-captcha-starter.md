@@ -10,10 +10,10 @@ tag:
 
 ## 1. 模块定位
 
-验证码聚合模块，坐标 `top.mddata.base:md-captcha-starter`（聚合 pom），下辖两个独立子 starter：
+验证码聚合模块，坐标 `top.mddata.base:md-captcha-starter`，下辖两个独立子 starter：
 
-- **md-graphic-captcha-starter**：图形验证码（hutool/easy-captcha 内核），`GraphicCaptchaService` 生成图片；
-- **md-slider-captcha-starter**：滑块/点选验证码（anji-captcha 内核），内置缓存实现。
+- **md-graphic-captcha-starter**：图形验证码（基于 easy-captcha ），`GraphicCaptchaService` 生成图片；
+- **md-slider-captcha-starter**：滑块/点选验证码（基于 anji-captcha），内置缓存实现。
 
 ## 2. 源码解读
 
@@ -25,7 +25,7 @@ md-captcha-starter
 │       └── properties/GraphicCaptchaProperties.java  # mdp.captcha.graphic.*
 └── md-slider-captcha-starter
     └── top.mddata.base.captcha.slider
-        ├── SliderCaptchaAutoConfiguration.java       # 自动配置（含缓存三分支装配）
+        ├── SliderCaptchaAutoConfiguration.java       # 自动配置
         ├── SliderCaptchaCacheServiceImpl.java / SliderCaptchaCacheAutoConfiguration.java
         └── properties/SliderCaptchaProperties.java   # mdp.captcha.slider.*
 ```

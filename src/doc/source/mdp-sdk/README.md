@@ -10,14 +10,14 @@ tag:
 
 # mdp-sdk 总览
 
-`mdp-sdk` 是 MDP 开放平台提供给 **ISV / 第三方开发者** 的 Java SDK，用于调用平台开放的 `@Open` 接口（用户、机构、消息、文件等主数据能力）。
+`mdp-sdk` 是 MDP 开放平台提供给 **第三方开发者** 的 Java SDK，用于调用平台开放的 `@Open` 注解标记的接口。
 
-源码位置：`mdp/mdp-sdk`，Maven 坐标 `top.mddata.sdk`，当前版本随 `${revision}`（1.5.0-SNAPSHOT）。
+源码位置：`mdp/mdp-sdk`，Maven 坐标 `top.mddata.sdk`。
 
 ## 1. 设计定位
 
 ::: warning 独立 jar，严禁依赖内部模块
-mdp-sdk 是要**交付给第三方**的独立 jar，依赖项必须尽可能少（仅 okhttp + fastjson2 + commons-logging + commons-io）。二次开发时**千万不要**让它依赖 mdp-base、mdp-apps 下的任何内部模块，否则会把平台内部实现泄露给第三方。
+mdp-sdk 是要**交付给第三方**的独立 jar，依赖项必须尽可能少。二次开发时**千万不要**让它依赖 mdp-base、mdp-apps 下的任何内部模块，否则会把平台内部实现泄露给第三方。
 :::
 
 - 不依赖 Spring，纯 POJO + HTTP，任何 Java 项目均可直接使用
@@ -28,21 +28,21 @@ mdp-sdk 是要**交付给第三方**的独立 jar，依赖项必须尽可能少�
 
 ```mermaid
 flowchart LR
-    A[第三方应用] -->|"OpenClient.execute(api)"| B[mdp-simple-sdk<br/>API 封装层]
-    B --> C[mdp-sdk-core<br/>签名/HTTP/解析]
-    C -->|"HTTP 表单请求"| D[sop-gateway-server<br/>鉴权、验签、限流]
-    D --> E[mdp-openapi<br/>@Open 接口业务逻辑]
+    A["第三方应用"] -->|"OpenClient.execute(api)"| B["mdp-simple-sdk<br/>API 封装层"]
+    B --> C["mdp-sdk-core<br/>签名/HTTP/解析"]
+    C -->|"HTTP 表单请求"| D["sop-gateway-server<br/>鉴权、验签、限流"]
+    D --> E["mdp-api<br/>@Open 接口业务逻辑"]
 ```
 
 - **sop-gateway-server**：负责 appKey/accessToken 鉴权与签名校验
-- **mdp-openapi**：负责接口的业务逻辑（服务端模块，见 SOP 开放平台相关文档）
+- **mdp-api**：负责接口的业务逻辑（服务端模块，见 SOP 开放平台相关文档）
 
 ## 3. 子模块导航
 
 | 模块 | 职责 | 文档 |
 |---|---|---|
 | mdp-sdk-core | SDK 内核：HTTP 客户端、RSA 签名、AES 消息加解密、统一返回体与分页模型、请求基类 | [mdp-sdk-core](mdp-sdk-core.md) |
-| mdp-simple-sdk | 交付给第三方的具体 SDK：按业务域（token/user/org/msg/demo）封装的 API 三件套 | [mdp-simple-sdk](mdp-simple-sdk.md) |
+| mdp-simple-sdk | 交付给第三方的具体 SDK：按业务域（token/user/org/msg/demo）封装的 API 接口 | [mdp-simple-sdk](mdp-simple-sdk.md) |
 
 依赖关系：`mdp-simple-sdk → mdp-sdk-core`，单向依赖。
 

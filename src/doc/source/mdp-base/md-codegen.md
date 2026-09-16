@@ -42,7 +42,7 @@ top.mddata.codegen
 | 后端 | Entity/EntityBase（拆层）、Mapper、MapperXml、Service、ServiceImpl、Controller、Dto、Vo、Query、TableDef（APT 联动）、PackageInfo |
 | 前端 | ApiTs、ModelTs、PermTs、LangZh/LangEn JSON、table 型页面（Index/Form/Detail/Wrapper）、tree 型页面（含 Move） |
 
-生成的后端代码遵循 [md-mvc-flex](md-mvc-flex.md) 三层基类与 [md-common-pojo](../md-public/md-common-pojo.md) 的 Base+DO 实体拆层约定——生成器就是这两套约定的"标准答案"。
+生成的后端代码遵循 [md-mvc-flex](md-mvc-flex.md) 三层基类与 [md-common-pojo](../md-public/md-common-pojo.md) 的 Base+DO 实体拆层约定。
 
 ## 3. 可配置参数
 
@@ -74,5 +74,9 @@ top.mddata.codegen
 :::
 
 ::: warning 生成后以业务代码对待
-生成物落在业务工程后就是**普通代码**，可自由修改；重新生成会覆盖——generator 服务有差异合并策略时注意先备份。生成代码的 `@md.generator auto insert` 锚点注释（见 md-common-pojo 的 EchoApi 等）是自动插入的定位标记，别手工删。
+
+- 生成的代码在业务工程生成后就是**普通代码**，可自由修改；
+- 生成代码的 `@md.generator auto insert` 锚点注释（见 md-common-pojo 的 EchoApi 等）是自动插入的定位标记，别手工删。
+
 :::
+

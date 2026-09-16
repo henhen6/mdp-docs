@@ -12,14 +12,12 @@ tag:
 
 `md-annotation` 是**纯注解定义模块**，不含任何 Spring 依赖与运行逻辑，把平台全部自定义注解集中在一处，供实体、DTO、Controller 引用而不必依赖实现模块（避免循环依赖）。
 
-- Maven 坐标：`top.mddata.base:md-annotation`
 - 依赖：`knife4j-core`、`swagger-annotations-jakarta`、`swagger-models-jakarta`、`jakarta.validation-api`、`mybatis-flex-annotation`（全部是注解/API 级依赖）
-- 被依赖：`md-core` → 几乎所有模块
 - 注解的**消费方**分散在其他模块：`@Echo` 由 md-echo-starter 处理、`@RequestLog` 由 md-log-starter 处理、`@LoginUser`/`@ParamName` 由 md-boot 处理
 
 ## 2. 源码解读
 
-包结构（`top.mddata.base.annotation`）：
+包结构：
 
 ```
 annotation/
@@ -89,7 +87,7 @@ public R<User> info(@LoginUser(isOrg = true) SysUser user) { ... }
 
 ## 3. 可配置参数
 
-无。纯注解模块不含配置属性类；各注解的行为开关在消费方模块（如 `mdp.echo.enabled`、`mdp.log.enabled`）。
+无。
 
 ## 4. 扩展点
 

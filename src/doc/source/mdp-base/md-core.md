@@ -12,7 +12,7 @@ tag:
 
 `md-core` 是 mdp-base 的**核心模块**：定义统一响应体、基础实体、异常体系、线程上下文、缓存 key 契约与回显 SPI。它只依赖 `md-annotation` 与 `spring-context`，被平台几乎所有模块依赖 —— **改这里等于改全平台契约**，二开时应只增不改。
 
-- Maven 坐标：`top.mddata.base:md-core`（description：核心模块）
+- Maven 坐标：`top.mddata.base:md-core`
 - 依赖：md-annotation、spring-context
 - 被依赖：md-util、md-boot、md-db、全部 starter
 
@@ -35,7 +35,7 @@ util/          # ContextUtil（线程上下文）、StrPool、LogSuppressUtil
 
 | 字段 | 说明 |
 | --- | --- |
-| `code` | 0/200 成功；负数系统级错误；正数业务错误（见 ExceptionCode） |
+| `code` | 0成功；负数系统级错误；正数业务错误（见 ExceptionCode） |
 | `data` | 业务数据（泛型 T） |
 | `msg` | 提示信息，成功为 `"ok"` |
 | `path` | 请求路径（异常时由全局处理器回填） |
@@ -49,9 +49,9 @@ util/          # ContextUtil（线程上下文）、StrPool、LogSuppressUtil
 ### 2.2 基础实体三件套
 
 ```mermaid
-flowchart TB
-    B["BaseEntity&lt;T&gt;<br/>id + createdAt + createdBy"] --> S["SuperEntity&lt;T&gt;<br/>+ updatedAt + updatedBy"]
-    S --> T["TreeEntity&lt;T,E&gt;<br/>+ parentId + weight + children"]
+flowchart BT
+    T["TreeEntity&lt;T,E&gt;<br/>+ parentId + weight + children"] -->|extends| S["SuperEntity&lt;T&gt;<br/>+ updatedAt + updatedBy"]
+    S -->|extends| B["BaseEntity&lt;T&gt;<br/>id + createdAt + createdBy"]
 ```
 
 - `base/entity/BaseEntity.java`：
@@ -78,18 +78,84 @@ BaseException / BaseCheckedException / BaseUncheckedException
 
 ### 2.4 线程上下文 ContextUtil
 
-`util/ContextUtil.java` 基于 `ThreadLocal<Map<String,String>>` 存取当前请求的用户/组织/链路信息，key 定义在 `constant/ContextConstants.java`：`Token`、`Authorization`、`AppId`、`UserId`、`CurrentCompanyId`、`CurrentCompanyNature`、`CurrentTopCompanyId`、`CurrentDeptId`、`Path`、`Accept-Language`、traceId、灰度版本等。
+`util/ContextUtil.java` 基于**普通 ThreadLocal**（`ContextUtil.java:60`，非 InheritableThreadLocal、非 TTL）存取当前请求的用户/组织/链路信息，key 定义在 `constant/ContextConstants.java`：`Token`、`Authorization`、`AppId`、`UserId`、`CurrentCompanyId`、`CurrentCompanyNature`、`CurrentTopCompanyId`、`CurrentDeptId`、`Path`、`Accept-Language`、traceId、灰度版本等。
 
 写入方：微服务模式由网关注入请求头 → `HeaderThreadLocalInterceptor`；单体模式由 `TokenContextFilter` 从 Sa-Token 会话解析（两者见 md-public 的 md-common-config）。读取方遍布全平台（审计字段填充、数据权限、日志）。
 
+#### 参数丢失/取不到的高危场景
+
+::: warning ThreadLocal 不跨线程 —— 换线程 = 上下文为空
+以下场景中 `ContextUtil.getUserId()` 等**必然取不到值**（返回 null），进而引发审计字段没填充、数据权限过滤失效、日志缺操作人等隐性 bug：
+
+| # | 场景 | 原因 | 正确做法 |
+|---|---|---|---|
+| 1 | **`@Async` 异步方法** | 方法在线程池（md-boot 的 md-async-executor-）执行，请求线程早已 return，ThreadLocal 不随线程池传递 | 参数在**调用方**先取出来显式传参；或参考 `BaseEventVO.copy()/write()` 在异步前后搬运（md-log-starter 的 SysLogListener 就是：切面在请求线程组装完 `OptLogDTO` 才发事件） |
+| 2 | **手动 `new Thread()` / 自建线程池** | 同上，全新线程的 ThreadLocal 是空的 | 同上；用完记得在新线程内 `remove()` |
+| 3 | **CompletableFuture / 并行流（parallelStream）** | 任务跑到 ForkJoinPool.commonPool() 的其他线程 | 计算所需的上下文先在主线程提取为局部变量再进入 lambda |
+| 4 | **定时任务（PowerJob/@Scheduled）** | 定时线程不经过 Web 拦截器，从头就没有上下文 | 用「系统操作人」语义兜底（显式 set 系统账号），不要依赖登录态 |
+| 5 | **消息监听（MQ consumer）** | 消费线程与生产请求线程无关 | 生产端把 userId 写进消息体，消费端显式 `set` 后再处理（用完 remove） |
+| 6 | **微服务跨服务调用后，被调方取不到** | ThreadLocal 不跨进程：A 服务 set 的值到 B 服务就是没有 | 上下文经请求头透传（`FeignAddHeaderRequestInterceptor`，见 md-cloud-starter），B 服务靠 `HeaderThreadLocalInterceptor` 重建 —— **自建 HTTP 客户端调服务时必须自己透传这些 header** |
+| 7 | **单元测试 / main 方法直接调用** | 没有拦截器写入 | 测试里手动 `ContextUtil.setUserId(...)`，结束后 remove |
+
+```java
+// ❌ 错误：异步方法里直接取上下文 —— getUserId() 返回 null
+@Async
+public void auditAsync(String bizId) {
+    Long userId = ContextUtil.getUserId();   // null！
+    saveLog(bizId, userId);                  // 审计字段丢失
+}
+
+// ✅ 正确：调用方先取，显式传参
+public void doBiz(String bizId) {
+    Long userId = ContextUtil.getUserId();   // 请求线程内，取得到
+    auditAsync(bizId, userId);
+}
+@Async
+public void auditAsync(String bizId, Long userId) {
+    saveLog(bizId, userId);
+}
+```
+
+平台提供的标准搬运模式（`BaseEventVO`，md-common-pojo）：
+
+```java
+// 生产端（请求线程）：快照上下文进事件
+event.setContextMap(BaseEventVO.copy());     // 内部 ContextUtil.getLocalMap() 全量复制
+// 消费端（新线程）：还原
+event.getContextMap().write();               // 内部 ContextUtil.setLocalMap(map)
+```
+:::
+
 ### 2.5 缓存 key 契约
 
-`model/cache/CacheKeyBuilder.java`（`@FunctionalInterface`）定义 key 构建规范：
+`model/cache/CacheKeyBuilder.java`（`@FunctionalInterface`）定义 key 构建规范。
 
-- 命名规范（Javadoc）：`[前缀:][租户ID:]表名[:字段名][:唯一键值]`，冒号分隔
-- 抽象方法仅 `getTable()`；默认 `getField()` 返回 `id`、`getExpire()` 返回 null（永不过期）、`getPattern()` 返回 `*:{table}:*`
-- `key(uniques...)` → `CacheKey`（KV 模式，redis/caffeine 通用）；`hashKey()`/`hashFieldKey(field,...)` → `CacheHashKey`（redis hash）
-- 全局前缀由静态 `CacheKeyBuilder.Key.setPrefix(...)` 设置，用于区分项目/环境
+**命名风格**（类 Javadoc）：
+
+- 【推荐】key 需具可读性、可管理性，不使用含义不清或特别长的 key 名；
+- 【强制】以英文字母开头，只允许**小写字母、数字、英文点号(.)和英文半角冒号(\:)**；
+- 【强制】不包含特殊字符——下划线、空格、换行、单双引号及其他转义字符均禁止。
+
+**命名规范**：`[前缀:]业务类型[:业务字段][:业务值]`，各段用冒号拼接：
+
+| 段 | 必填 | 说明 |
+| --- | --- | --- |
+| 前缀 | 可选 | 区分不同项目、不同环境（经 `Key.setPrefix()` 静态全局设置） |
+| 业务类型 | **必填** | 区分业务类型的数据缓存，通常为**表名**；同一 key 有多个业务类型时用英文点号(.)分割表示完整语义，如 `user.role` 存储用户拥有的角色 |
+| 业务字段 | 可选 | 区分业务值属于哪个字段，通常为字段名；多个业务类型时业务字段对应多个 |
+| 业务值 | 可选 | 区分同一业务类型下不同行的数据缓存 |
+
+**接口结构**（与代码逐项对应）：
+
+- 抽象方法仅 `getTable()`（业务类型，必填）；
+- `getField()` 默认返回 `SuperEntity.ID_FIELD`（继承自 `BaseEntity.java:60`，即 `"id"`），复写可换字段名，返回空串则跳过该段；
+- `getExpire()` 默认 null（**永不过期**），`@Nullable`；
+- `getPrefix()` 读静态 `Key.prefix`（区分项目/环境）；
+- `getPattern()` 返回 `*:{table}:*` 通配，用于批量清理；
+- `key(uniques...)` → `CacheKey`（通用 KV 模式，**redis/caffeine 双兼容**），`uniques` 即「业务值」段（多个值依次拼接，空值自动跳过）；
+- `hashKey()` / `hashFieldKey(field, ...)` → `CacheHashKey`（redis hash 模式，后者带 field）。
+
+key 拼接逻辑见私有方法 `getKey()`（`CacheKeyBuilder.java:142-166`）：前缀(有则加) → 业务类型(必填,空则断言失败) → 业务字段(非空才加) → 业务值(逐个非空才加)，冒号连接。`key()`/`hashKey()` 均对结果做 `Assert.notEmpty` 校验。
 
 平台全部缓存 key 实现集中在 md-public 的 `md-cache-key` 模块（见 [md-cache-key](../md-public/md-cache-key.md)）。
 
@@ -141,7 +207,6 @@ BaseException / BaseCheckedException / BaseUncheckedException
 
 ::: warning 高频坑点
 1. **ContextUtil 必须清理**：ThreadLocal 用完不调 `remove()` 会内存泄漏 + 线程池串数据；平台拦截器已统一清理，自行开线程时需手动搬运（参考 `BaseEventVO.copy()/write()` 的做法）。
-2. **R 的成功码是 0 或 200 双判定**：客户端判断成功请用 `getIsSuccess()`，不要只比较某一个值。
 3. **errorMsg 只在 dev/test 返回**：全局异常处理器根据 `spring.profiles.active` 决定是否回填，生产排查问题靠服务端日志而非响应体。
 4. **TreeEntity 的 children/parent 不落库**（`@Column(ignore=true)`），需要持久化父子关系时用 `parentId` 字段；`weight` 排序值别与业务「权重」概念混淆。
 5. **本模块被全平台依赖**：任何对既有类签名/常量值的修改都是破坏性变更，升级平台版本时优先 diff 此模块。

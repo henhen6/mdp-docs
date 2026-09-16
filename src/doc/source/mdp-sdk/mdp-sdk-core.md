@@ -51,9 +51,9 @@ top.mddata.sdk.core
 
 1. `param.createRequestForm(openConfig)` 生成公共参数表单
 2. accessToken 优先级：请求级 > 客户端默认级
-3. 签名开关优先级：`param.getSignEnabled()`（非 null 时）> `openConfig.isSignEnabled()`
+3. 签名开关优先级：`param.getSignEnabled()`> `openConfig.isSignEnabled()`
 4. `param instanceof DownloadAware` 时走下载分支，否则 `parseResponse` 解析 JSON
-5. 响应解析（`OpenClient.java:222-243`）：先整体转 `Result`（下划线智能转驼峰），再从 `dataNameBuilder.build(method)` 指定的数据节点取业务数据，JSONArray 自动转 List
+5. 响应解析：先整体转 `Result`（下划线智能转驼峰），再从 `dataNameBuilder.build(method)` 指定的数据节点取业务数据，JSONArray 自动转 List
 
 ### 2.3 BaseParam —— 请求对象基类
 
@@ -70,7 +70,7 @@ top.mddata.sdk.core
 | `notifyUrl` | 异步回调地址（如批量导入完成后回调） |
 | `files` | `addFile(UploadFile)` 添加上传文件 |
 
-`createRequestForm(OpenConfig)`（`BaseParam.java:104-127`）组装公共参数：`method`、`format`、`charset`、`signType`、`timestamp`（yyyy-MM-dd HH:mm:ss）、`version`、`notifyUrl`、`bizContent`，内部用 `SkipNullHashMap` 自动跳过 null 值。
+`createRequestForm(OpenConfig)` 组装公共参数：`method`、`format`、`charset`、`signType`、`timestamp`（yyyy-MM-dd HH:mm:ss）、`version`、`notifyUrl`、`bizContent`，内部用 `SkipNullHashMap` 自动跳过 null 值。
 
 ### 2.4 OpenConfig —— 编程式配置
 
@@ -95,9 +95,9 @@ top.mddata.sdk.core
 
 ### 2.5 Result / Page / PageParams —— 数据模型
 
-- `common/Result.java`：统一返回体，字段 `code/msg/subCode/subMsg/solution/data`。**`isSuccess()` 判定依据是 `subCode` 为空**（`Result.java:18-20`），不是 code==0；静态工厂 `success(data)` / `error(msg)`
+- `common/Result.java`：统一返回体，字段 `code/msg/subCode/subMsg/solution/data`。**`isSuccess()` 判定依据是 `subCode` 为空**，不是 code==0；静态工厂 `success(data)` / `error(msg)`
 - `response/Page.java`：分页返回，字段 `records/pageNumber/pageSize/totalPage/totalRow`，提供 `of(...)` 工厂与 `hasNext()/hasPrevious()/offset()` 翻页辅助
-- `request/PageParams.java`：分页入参，字段 `model`（查询条件对象）/`size`(10)/`current`(1)/`sort`/`order`/`extra`（扩展参数 Map，`put(key,value)` 链式添加）
+- `request/PageParams.java`：分页入参，字段 `model`（查询条件对象）/`size`(10)/`current`(1)/`sort`/`order`/`extra`
 - `param/IdRequest.java`：通用「按 id 查询」入参，只有 `id` 一个字段
 
 ### 2.6 签名与加解密
@@ -160,6 +160,3 @@ top.mddata.sdk.core
 `Result.isSuccess()` 只看 `subCode` 是否为空。排查调用失败时优先打印 `subCode/subMsg/solution` 三个字段，`code/msg` 是网关层信息。
 :::
 
-::: tip 示例代码中的密钥
-`mdp-simple-sdk/src/test/BaseTest.java` 内含测试环境的 appSecret 与私钥明文，仅限本地联调。二开时请勿把真实密钥提交到仓库或写入文档，统一走配置/环境变量。
-:::

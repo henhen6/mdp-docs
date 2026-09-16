@@ -10,7 +10,7 @@ tag:
 
 ## 1. 模块定位
 
-系统 API 扫描模块，坐标 `top.mddata.base:md-scan-starter`。服务启动时扫描全部 Controller 的 `@RequestMapping`，对外暴露一个**匿名**接口 `GET /anyone/systemApiScan` 返回接口清单，供 SOP 开放平台/网关侧采集"这个服务有哪些接口"。
+系统 API 扫描模块，坐标 `top.mddata.base:md-scan-starter`。服务启动时扫描全部 Controller 的 `@RequestMapping`，对外暴露一个**匿名**接口 `GET /anyone/systemApiScan` 返回接口清单。主要用于【控制台】-【菜单管理】配置接口权限。
 
 ## 2. 源码解读
 
@@ -43,16 +43,6 @@ top.mddata.base.scan
 
 | 想做什么 | 推荐做法 |
 |---|---|
-| 网关自动发现服务接口 | 保持默认开启，网关定时拉 `/anyone/systemApiScan` |
 | 接口清单落库做权限映射 | 在管理端消费该接口的返回，别改扫描逻辑 |
 | 限定扫描范围 | 配 `mdp.scan.base-package` 排除无关 controller |
 
-## 6. 二次开发注意事项
-
-::: danger 匿名接口，注意暴露面
-`/anyone/systemApiScan` 走 `anyone` 放行约定（登录但不鉴权，甚至外网可达，取决于网关配置）。它返回**全部**接口路径与方法签名——生产环境如果服务直接暴露公网，建议关闭（`mdp.scan.enabled=false`）或在网关屏蔽该路径，仅在内网供平台采集。
-:::
-
-::: warning 路径约定
-`anyone` 前缀在 md-public 的 `IgnoreProperties`（`mdp.ignore.anyone`）中有全局语义："需登录但免鉴权"。给新接口起路径时避开误用该前缀。
-:::

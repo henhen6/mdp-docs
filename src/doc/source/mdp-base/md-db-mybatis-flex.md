@@ -10,15 +10,15 @@ tag:
 
 ## 1. 模块定位
 
-MyBatis-Flex 深度整合模块，坐标 `top.mddata.base:md-db-mybatis-flex`。负责 ORM 层的全局定制：数据权限、SQL 审计、逻辑删除、主键生成器对接、审计字段自动填充。依赖 md-db、md-util、mybatis-flex。是 mdp-base 中**唯一注册了自动配置类**的持久层模块。
+MyBatis-Flex 深度整合模块，坐标 `top.mddata.base:md-db-mybatis-flex`。负责 ORM 层的全局定制：数据权限、SQL 审计、逻辑删除、主键生成器对接、审计字段自动填充。依赖 md-db、md-util、mybatis-flex。
 
 ## 2. 源码解读
 
 ```
 top.mddata.base.mybatisflex
 ├── config/
-│   ├── MyMybatisFlexConfiguration.java      # 抽象配置：extends DbConfiguration implements MyBatisFlexCustomizer
-│   └── DataPermissionAutoConfiguration.java # 自动配置（imports 唯一注册项）
+│   ├── MdMybatisFlexConfiguration.java      # 抽象配置：extends DbConfiguration implements MyBatisFlexCustomizer
+│   └── DataPermissionAutoConfiguration.java # 自动配置
 ├── datapermission/                          # 数据权限套件
 │   ├── DataPermission.java                  # 方法注解
 │   ├── DataPermissionAspect.java            # AOP 切面
@@ -36,17 +36,15 @@ top.mddata.base.mybatisflex
 └── utils/BeanPageUtil.java
 ```
 
-### 2.1 MyMybatisFlexConfiguration（抽象，需继承）
+### 2.1 MdMybatisFlexConfiguration
 
-实现 `MyBatisFlexCustomizer.customize(FlexGlobalConfig)`，启动时依次装配（`MyMybatisFlexConfiguration.java:80-93`）：
+实现 `MyBatisFlexCustomizer.customize(FlexGlobalConfig)`，启动时依次装配（`MdMybatisFlexConfiguration.java:80-93`）：
 
 1. `audit()`：按 `flex.audit` 开启审计，按 `flex.audit-collector` 选择收集器（默认打 INFO 日志，并抑制操作日志落库链路自身的 SQL，避免级联刷屏）；
 2. `uid()`：把 `UidKeyGenerator` 注册进 KeyGeneratorFactory（主键生成对接 md-db 的 UidGenerator）；
 3. `logicDelete()`：按 `flex.logic-delete-processor` 设置 6 种处理器之一（默认 TIME_STAMP_DEL_BY）；
 4. 全局监听器：`DefaultInsertListener` / `DefaultUpdateListener` 注册给 `BaseEntity` 的所有子类——**创建/更新时间与操作人的自动填充就在这里**；
 5. `DatabaseIdProvider`：Oracle/MySQL/SQLServer 的 databaseId 映射（多数据库 SQL 切换用）。
-
-MDP 中由 md-public 的 `MybatisFlexConfiguration` 继承落地（同时做 `@MapperScan`）。
 
 ### 2.2 数据权限套件
 
@@ -79,7 +77,6 @@ flowchart LR
 | 扩展点 | 类型 | 说明 |
 |---|---|---|
 | `DataPermissionFilter` | 接口（应用必须实现） | 提供当前用户/部门给数据权限；可自定义数据源 |
-| `MyMybatisFlexConfiguration` | 抽象类 | 应用继承可覆盖 `customize()` 追加全局配置（不建议大改，影响全库行为） |
 | `DataPermissionDialect` | 类 | 注册到 `DialectFactory`，新数据库种需自行注册对应方言 |
 | 审计字段填充 | 监听器 | `DefaultInsert/UpdateListener` 针对 `BaseEntity`；新填充字段可加监听器 |
 | `TimeStampDelByLogicDeleteProcessor` | 类 | 换逻辑删除语义走配置枚举，无需写代码 |
@@ -89,10 +86,8 @@ flowchart LR
 | 想做什么 | 推荐做法 |
 |---|---|
 | 按部门隔离数据 | `flex.data-scope=true` + Service 方法加 `@DataPermission` + 确认应用实现了 `DataPermissionFilter` |
-| 新增表跳过数据权限 | 不要乱加 ignore-table（那是租户的）；数据权限是注解式按方法生效的，不加注解即不拦截 |
-| 多租户 | `ignore-table`/`ignore-table-prefix` 控制租户插件拼接范围 |
 | 看 SQL 性能 | `flex.audit=true` + `audit-collector=COUNTABLE` 做量级统计 |
-| 自定义审计输出 | 实现自己的 `MessageCollector`（参考 `MyMybatisFlexConfiguration#audit` 的装配方式） |
+| 自定义审计输出 | 实现自己的 `MessageCollector`（参考 `MdMybatisFlexConfiguration#audit` 的装配方式） |
 
 ## 6. 二次开发注意事项
 

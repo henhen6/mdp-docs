@@ -69,7 +69,7 @@ MyBatis 注解 DAO（不走 mybatis-flex），对 `worker_node` 表 insert/selec
 ## 6. 二次开发注意事项
 
 ::: warning 升级与定制
-本模块是百度 uid-generator 的**源码副本**（非 Maven 依赖），升级百度版本需手动 diff 合并，不要直接覆盖 `HuToolUidGenerator`、`WorkerNodeDao` 等平台新增类。修改位数参数前先算容量：`timeBits + workerBits + seqBits` 之和受 long 位宽约束，且 epochStr 之后才有效。
+本模块是百度 uid-generator 的**源码副本**，升级百度版本需手动 diff 合并，不要直接覆盖 `HuToolUidGenerator`、`WorkerNodeDao` 等平台新增类。修改位数参数前先算容量：`timeBits + workerBits + seqBits` 之和受 long 位宽约束，且 epochStr 之后才有效。
 :::
 
 ::: warning worker_node 表膨胀

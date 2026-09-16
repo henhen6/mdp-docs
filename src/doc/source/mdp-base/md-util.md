@@ -10,7 +10,7 @@ tag:
 
 ## 1. 模块定位
 
-mdp-base 的通用工具集，坐标 `top.mddata.base:md-util`。依赖 md-core，提供 Bean 拷贝、参数断言、树构建、字符串/日期/集合工具、SQL 注入过滤、MapStruct 基类、函数式接口等无业务语义的基础设施。被 md-boot、md-db-mybatis-flex、md-codegen、md-cloud-starter 等大量模块依赖，是依赖链上游的"叶子模块"之一。
+mdp-base 的通用工具集，坐标 `top.mddata.base:md-util`。依赖 md-core，提供 Bean 拷贝、参数断言、树构建、字符串/日期/集合工具、SQL 注入过滤、MapStruct 基类、函数式接口等无业务语义的基础设施。被 md-boot、md-db-mybatis-flex、md-codegen、md-cloud-starter 等大量模块依赖。
 
 ## 2. 源码解读
 
