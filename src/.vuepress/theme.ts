@@ -4,6 +4,8 @@ import { path } from "vuepress/utils";
 import navbar from "./navbar.js";
 import sidebar from "./sidebar.js";
 
+export const BASE : "/" | `/${string}/` = "/";
+
 export default hopeTheme({
   hostname: "http://mddata.top",
 

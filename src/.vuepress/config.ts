@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 import { defineUserConfig } from "vuepress";
 import { path } from "vuepress/utils";
+import { BASE } from "./theme.js";
 
 import theme from "./theme.js";
 
@@ -23,10 +24,10 @@ function resolveMarkdownChartClient(): string {
 }
 
 export default defineUserConfig({
-  base: "/",
+  base: BASE,
+  title: BASE === "/" ? "MDP" : "MDP-V" + BASE.substring(1, BASE.length - 1),
 
   lang: "zh-CN",
-  title: "Mdp",
   description: "主数据平台",
 
   theme,
