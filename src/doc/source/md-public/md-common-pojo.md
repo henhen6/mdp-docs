@@ -56,11 +56,10 @@ public class User extends UserBase {
 | 实体 | 表 | 基类 | 说明 |
 | --- | --- | --- | --- |
 | `User` / `UserBase` | mdc_user | `SuperEntity<Long>` | 用户（username/password/sex/phone/email/state…） |
-| `Org` / `OrgBase` | mdc_org | `TreeEntity` | 组织（树形结构） |
-| `OrgNature` / `OrgNatureBase` | — | — | 组织性质 |
-| `Position` / `PositionBase` | — | — | 岗位 |
-| `UserOrgRel` / `UserOrgRelBase` | — | — | 用户-组织关系 |
-| `UserRoleRel` / `UserRoleRelBase` | — | — | 用户-角色关系 |
+| `Org` / `OrgBase` | mdc_org | `TreeEntity` | 组织（树形结构，组织性质为 `nature` 字段） |
+| `Position` / `PositionBase` | mdc_position | `SuperEntity<Long>` | 岗位 |
+| `UserOrgRel` / `UserOrgRelBase` | mdc_user_org_rel | `BaseEntity<Long>` | 用户-组织关系 |
+| `UserRoleRel` / `UserRoleRelBase` | mdc_user_role_rel | `BaseEntity<Long>` | 用户-角色关系 |
 
 ::: tip TableDef 自动生成
 父 POM 的 annotationProcessorPaths 挂载了 `mybatis-flex-processor`，编译期会在 `target/generated-sources/` 下生成 `*TableDef` 类，条件构造器（`QueryWrapper`）直接使用，无需手写列名字符串。
@@ -98,8 +97,8 @@ public enum StateEnum implements BaseEnum<Boolean> {
 | 包 | 枚举 |
 | --- | --- |
 | `enumeration/` | `BooleanEnum`、`HttpMethod`、`AuditStatusEnum`、`StateEnum`、`StoryMessageEnum`、`Sex` |
-| `enumeration/organization/` | `UserSourceEnum`、`OrgTypeEnum`、`UserTypeEnum`、`OrgNatureEnum` |
-| `enumeration/permission/` | `RoleTypeEnum`、`RoleCategoryEnum`、`MenuTypeEnum` |
+| `enumeration/organization/` | `UserSourceEnum`、`OrgTypeEnum`、`OrgNatureEnum`、`UserIdentityEnum`（用户身份，**未实现 BaseEnum**，不会被 EnumService 收集） |
+| `enumeration/permission/` | `RoleCategoryEnum`、`MenuTypeEnum` |
 | `enumeration/system/` | `DataTypeEnum`（枚举值数据类型，供 EnumService 解析泛型用） |
 
 ### 2.5 常量（constant/）
@@ -110,7 +109,8 @@ public enum StateEnum implements BaseEnum<Boolean> {
 | `EchoApi` / `EchoDictType` / `EchoRef` | `@Echo` 回显注解的 api/字典类型/引用常量（含 `@md.generator auto insert` 锚点，代码生成器自动追加） |
 | `EventTypeCode` | org/user 的增删改事件码（事件回调机制用） |
 | `MsgTemplateKey` | 站内信/短信/邮件模板 key |
-| `RoleCode` | 内置角色：`SUPER_ADMIN`、`DEFAULT_DEVELOPER`、`DEFAULT_USER` |
+| `RoleCode` | 内置角色编码：`OPERATIONS_ADMIN`（运营管理员，接口鉴权豁免）、`OPERATIONS_ADMIN_COLL`、`ADMIN`、`ADMIN_COLL`、`DEVELOPER_ADMIN`、`DEVELOPER_ADMIN_COLL`、`DEFAULT_DEVELOPER`、`DEFAULT_USER`；`BUILT_IN_CODES` 为保留编码集合 |
+| `BuiltInOrgId` / `BuiltInUserId` | 内置组织 ID（运营中心/开发者平台/总公司/默认部门）与内置用户 ID（OPS_ADMIN/OPEN_ADMIN/ADMIN），各含 `ALL` 列表。**与初始化 SQL 的内置数据一一对应，属跨环境契约，禁止修改** |
 | `FileObjectType`、`ConfigKey`、`DefValConstants`、`SwaggerConstants` | 文件业务类型、系统参数 key、默认值、文档常量 |
 | `console/AdminConstant` | 前端菜单布局（IFRAME/LAYOUT/OPEN_LAYOUT）及 meta 字段名 |
 
@@ -152,11 +152,14 @@ public enum StateEnum implements BaseEnum<Boolean> {
 | --- | --- | --- |
 | `auth-enabled` | `true` | 是否启用 uri 权限与前端按钮权限校验，`false` 则完全不校验 |
 | `case-sensitive` | `false` | 前端按钮权限是否区分大小写 |
-| `base-uri` | 内置集合 | 永久放行：静态资源(css/js/html/图片)、`/**/anno/**`、`/**/druid/**`、`/actuator/**`、api-docs/swagger、`/**/form/validator/**`、`/error` 等 |
+| `not-config-uri-allow` | `true` | 未纳管的接口是否放行（联调期 true；白名单严格模式 false） |
+| `gateway-prefix` | `api` | 接口权限路径归一化时剥离的网关前缀 |
+| `service-prefixes` | `{console, workbench, open}` | 归一化时剥离第一段的服务前缀集合 |
+| `base-uri` | 内置集合 | 永久放行：静态资源(css/js/html/图片、`/**/static/**`、`/**/public/**`)、`/**/anno/**`、`/**/druid/**`、`/actuator/**`、api-docs/swagger、`/**/form/validator/**`、`/error` 等 |
 | `anyone` | `{}` | **需登录、不鉴权**：携带 token 但不校验 uri 权限，可取到 userId（如文件上传、字典查询） |
 | `any-user` | `{}` | **免登录、免鉴权**：不携带 token 也可访问，取不到 userId（如登录页、门户接口） |
 
-三个集合的合并逻辑：`buildAnyone()` = baseUri + anyUser + anyone；`buildAnyUser()` = baseUri + anyUser；对应判定方法 `isIgnoreUriAuth(method, path)` 与 `isIgnoreUser(method, path)`。
+三个集合的合并逻辑：`buildAnyone()` = baseUri + anyUser + anyone；`buildAnyUser()` = baseUri + anyUser；对应判定方法 `isIgnoreUriAuth(method, path)` 与 `isIgnoreUser(method, path)`。`not-config-uri-allow` / `gateway-prefix` / `service-prefixes` 三项是接口权限判定（`ApiPermChecker`）的直接输入，见 [md-resource-api](md-resource-api.md)。
 
 ## 3. 可配置参数
 

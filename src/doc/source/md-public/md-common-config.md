@@ -14,7 +14,7 @@ tag:
 
 ## 2. 源码解读
 
-包根 `top.mddata.common`，按 `configuration/`（@Configuration 类）、`configurer/`（WebMvcConfigurer）、`interceptor/`（拦截器/过滤器）、`aspect/`（切面）、`file/`、`undertow/` 组织。
+包根 `top.mddata.common`，按 `configuration/`（@Configuration 类）、`configurer/`（WebMvcConfigurer）、`interceptor/`（拦截器/过滤器）、`aspect/`（切面）、`apiperm/`（单体版接口权限入口）、`controller/`（公共服务接口）、`datascope/`（数据权限提供方）、`file/`、`undertow/` 组织。
 
 ### 2.1 mode=cloud/boot 双拦截器互斥机制（核心）
 
@@ -25,21 +25,25 @@ tag:
 | `cloud`（**matchIfMissing=true，缺省即此**） | `HeaderThreadLocalInterceptor` | 网关已解析 token，把 userId/companyId/deptId 等写入**请求头**；拦截器只做 header → `ContextUtil` + MDC 的搬运 |
 | `boot` | `TokenContextFilter extends SaInterceptor` | 服务端直接读 **sa-token 会话** `StpUtil.getSession()`，取 loginId 及 session 中缓存的组织字段 |
 
-两者都实现 `AsyncHandlerInterceptor`，`preHandle` 填充 `ContextUtil`/MDC，`afterCompletion` 中 `ContextUtil.remove() + MDC.clear()` 防止线程池串号；都只处理 `HandlerMethod`（静态资源直接放行），order 均为 -20，路径 `/**` 并排除 `BasicConfigurer.getExcludeCommonPathPatterns()` 的公共资源。
+两者都在 `preHandle` 填充 `ContextUtil`/MDC，`afterCompletion` 中 `ContextUtil.remove() + MDC.clear()` 防止线程池串号；都只处理 `HandlerMethod`（静态资源直接放行），order 均为 -20，路径 `/**` 并排除 `BasicConfigurer.getExcludeCommonPathPatterns()` 的公共资源。（`HeaderThreadLocalInterceptor` 实现 `AsyncHandlerInterceptor`；`TokenContextFilter` 继承 sa-token 的 `SaInterceptor`。）
 
-`TokenContextFilter` 还额外做了两件事（`TokenContextFilter.java`）：
+`TokenContextFilter` 还额外做了三件事（`TokenContextFilter.java`）：
 
 - `parseApplication`：从 header/参数取 appId 写入上下文；
-- `parseToken`：先用 `IgnoreProperties.isIgnoreUser(method, uri)` 判定免登录白名单，命中则跳过会话解析。其 `auth` 鉴权处理器目前为 **TODO 空实现**（uri 级鉴权在单体版尚未启用）。
+- `parseToken`：先用 `IgnoreProperties.isIgnoreUser(method, uri)` 判定免登录白名单，命中则跳过会话解析；
+- **uri 级鉴权（已落地）**：`auth` 处理器回调 `ApiPermSupport.check(uri, method)`——未登录跳过 → `isIgnoreUriAuth` 白名单跳过 → `ApiPermChecker.check(...)` 判定，不通过抛 `ArgumentException`（判定链见 [md-resource-api](md-resource-api.md)）。
 
 ### 2.2 其他关键类
 
 | 类 | 说明 |
 | --- | --- |
-| `SystemAutoConfiguration` | `@EnableConfigurationProperties({MsgProperties, SystemProperties})`；无条件注册 `MethodLogAspect`（注释说明：不按 recordLog 条件注册，因 SystemProperties 是 @RefreshScope 代理，运行期开关可被 Nacos 热刷新） |
-| `WebConfiguration` | 继承 md-boot 的抽象类 `BaseConfig`（获得 4 个日期 Converter 注册）；`addViewControllers` 把 `/` 转发到 `/index` |
-| `MybatisFlexConfiguration` | 继承 md-db-mybatis-flex 的抽象类 `MyMybatisFlexConfiguration`，补上 `@MapperScan`；数据库 id 策略、审计、逻辑删除等能力全部来自父类 |
+| `SystemAutoConfiguration` | `@ConditionalOnWebApplication` + `@EnableConfigurationProperties({MsgProperties, SystemProperties})`；无条件注册 `MethodLogAspect`（注释说明：不按 recordLog 条件注册，因 SystemProperties 是 @RefreshScope 代理，运行期开关可被 Nacos 热刷新）；注册 `AlwaysConfigurer` Bean |
+| `WebConfiguration` | 继承 md-boot 的抽象类 `BaseConfig`（获得 4 个日期 Converter 注册）；`@EnableConfigurationProperties(IgnoreProperties.class)`；注入 `ApiPermSupport` 传给 `TokenContextFilterConfigurer`；`addViewControllers` 把 `/` 转发到 `/index`；`addResourceHandlers("/**" → classpath:/)` |
+| `MybatisFlexConfiguration` | 独立 `@Configuration`：`@EnableConfigurationProperties(DatabaseProperties.class)` + `@MapperScan`；数据库 id 策略、审计、逻辑删除等能力由 md-db-mybatis-flex 的 `MdMybatisFlexConfiguration extends DbConfiguration` 自动装配 |
 | `ExceptionConfiguration` | 继承 md-boot 的抽象类 `AbstractGlobalExceptionHandler`。 |
+| `ApiPermSupport` | `apiperm/` 包，单体版接口权限判定入口：未登录跳过 → `isIgnoreUriAuth` 白名单跳过 → `ApiPermChecker.check(...)`，被 `TokenContextFilter` 的 auth 阶段调用 |
+| `ServicePrefixController` | `controller/` 包，`GET /findOnlineServicePrefix`：返回 `mdp.ignore.service-prefixes` 映射，供前端与网关版同路径零分支 |
+| `DataScopeProviderImpl` | `datascope/` 包，`@Component implements DataScopeProvider`（md-db-mybatis-flex DataScope 体系）：`isFilter()` 恒 true；`findEnabledMenuId(menuCode)` 直查 mdc_resource_menu 并走 `MenuDataScopeCacheKeyBuilder` 缓存；`getCurrentUser(menuId)` 返回 userId/companyId/deptId（部门取 `ContextUtil.getCurrentDeptOrCompanyId()`）+ 逐角色授权列表（`RoleDataScopeCacheKeyBuilder` 缓存）；跨模块用 MyBatis-Flex `Row Db` 直查 mdc_ 表 |
 | `MsgAutoConfiguration` | `@ConditionalOnBean(SmsReadConfig)`：应用提供了 sms4j 的动态配置读取 Bean 才装配；`@EventListener(ContextRefreshedEvent)` 时 `SmsFactory.createSmsBlend` 批量创建短信实例 |
 | `FileStorageConfiguration` | 取 x-file-storage 的 `localPlus` 第一个配置，复制后把 platform 改为 `localPlusExt`，注册 `LocalPlusExtFileStorage`（重写 `generatePresignedUrl`，返回 domain+fileKey 的完整访问地址） |
 | `ActuatorSecurityConfig` | 解决 /actuator 端点能直接访问导致敏感数据泄露的问题 |
@@ -47,7 +51,6 @@ tag:
 | `UndertowServerFactoryCustomizer` | 为 WebSocket 预置 XnioWorker/ByteBufferPool，消除 Undertow 启动告警；`@ConditionalOnClass(Undertow.class)` 才注册 |
 | `NotAllowWriteInterceptor` | 演示环境保护：`mdp.system.not-allow-write=true` 时，按 `not-allow-write-list` 中的 `Map<HTTP方法, URI列表>` Ant 匹配，命中抛 `BizException(-1, "演示环境禁止新增、修改、删除…")`；由 `AlwaysConfigurer` 以 `order=Integer.MIN_VALUE` 注册（最先执行） |
 | `MethodLogAspect` | 开发期全量方法日志，见 2.4 |
-| `DataPermissionFilterImpl` | `@Component implements DataPermissionFilter`（md-db-mybatis-flex）：数据权限的"当前用户"来源——从 `ContextUtil` 取 userId/deptId |
 | `ServerApplication` | 启动辅助工具：`start(primarySource, args)` 启动后打印 doc.html / druid 访问地址，各服务 main 方法调用它 |
 
 ### 2.4 MethodLogAspect 方法日志切面
@@ -80,14 +83,14 @@ tag:
 | --- | --- |
 | 定制全局异常响应 | 在 `ExceptionConfiguration` 中覆写 `AbstractGlobalExceptionHandler` 的对应 `@ExceptionHandler` 方法 |
 | 增删拦截器 | 新建 `XxxConfigurer extends BasicConfigurer implements WebMvcConfigurer`，参照 `HeaderThreadLocalConfigurer` 注册 |
-| 数据权限用户来源 | 替换 `DataPermissionFilterImpl`（@Component，可被同名/条件 Bean 覆盖），或扩展 `DataPermissionCurrentUser` 字段 |
+| 数据权限用户来源 | 替换 `DataScopeProviderImpl`（@Component，可被同名/条件 Bean 覆盖），或扩展 DataScope 体系的用户/授权模型 |
 | Web 基础配置 | `WebConfiguration extends BaseConfig`，可继续覆写 WebMvcConfigurer 各方法 |
 | 文件存储平台 | 仿照 `LocalPlusExtFileStorage` 继承 x-file-storage 对应平台类，重写 URL 生成逻辑后在 FileStorageConfiguration 注册 |
 | Actuator 用户体系 | 覆盖 `UserDetailsService` Bean，从内存用户换成数据库/LDAP |
 
 ## 5. 功能扩展建议
 
-- **单体版补 uri 鉴权**：`TokenContextFilter` 构造器中 `this.auth = handler -> {}` 是预留的 TODO 空实现，在此接入 sa-token 的注解鉴权或 `IgnoreProperties.isIgnoreUriAuth` 校验即可，不必新建拦截器。
+- **调整单体版 uri 鉴权行为**：鉴权已内建于 `TokenContextFilter` → `ApiPermSupport`，免鉴权路径配 `mdp.ignore.*` 即可；要更换权限数据源则替换 `ApiPermProvider` Bean（见 [md-resource-api](md-resource-api.md)），不必新建拦截器。
 - **生产开启方法日志**：`record-log` 默认关闭，压测/排障时经 Nacos 打开，配合 `record-args=false` 可只看调用链不落参数，注意日志量。
 - **新增公共配置类**：放 `configuration/` 包并遵循现有条件装配风格（@ConditionalOnXxx），确保服务按需引入时不产生多余 Bean。
 
@@ -106,5 +109,5 @@ tag:
 :::
 
 ::: tip 抽象类继承点集中在此
-mdp-base 故意把 `BaseConfig`、`AbstractGlobalExceptionHandler`、`MyMybatisFlexConfiguration` 留成抽象类（imports 为空），md-common-config 是平台统一继承落地处。业务服务**不要再各自继承一遍**，否则会出现双份 Converter/异常处理器 Bean 冲突。
+mdp-base 故意把 `BaseConfig`、`AbstractGlobalExceptionHandler` 留成抽象类，md-common-config 是平台统一继承落地处。业务服务**不要再各自继承一遍**，否则会出现双份 Converter/异常处理器 Bean 冲突。（MyBatis-Flex 侧无需继承：`MdMybatisFlexConfiguration` 在 md-db-mybatis-flex 中自动装配，本模块只做 `@MapperScan`。）
 :::

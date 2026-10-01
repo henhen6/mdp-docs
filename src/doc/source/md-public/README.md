@@ -11,11 +11,11 @@ tag:
 
 ## 1. 工程定位
 
-`md-public` 位于 `mdp-apps/` 下，是**平台所有业务服务共同依赖的公共层**：boot-server、console-server、workbench-server、open-server 等服务都建立在这五个模块之上。它承载了三类内容：
+`md-public` 位于 `mdp-apps/` 下，是**平台所有业务服务共同依赖的公共层**：boot-server、console-server、workbench-server、open-server 等服务都建立在这六个模块之上。它承载了三类内容：
 
 - **公共数据模型**：用户/组织等核心实体、通用 DTO、枚举、常量（md-common-pojo）
 - **公共持久层**：核心实体的 Mapper（md-common-dao）与缓存 key 规范（md-cache-key）
-- **公共装配层**：Web MVC、上下文拦截、全局异常、消息、文件存储等 Spring 配置（md-common-config）
+- **公共装配层**：Web MVC、上下文拦截、全局异常、消息、文件存储等 Spring 配置（md-common-config），以及接口权限数据提供（md-resource-api）
 
 与 `mdp-base`（纯技术框架、不含业务语义）的分工：mdp-base 提供 `SuperEntity`、`SuperMapper`、`BaseConfig` 等**抽象基座**，md-public 在其上落地**平台自己的业务公共实现**。
 
@@ -28,6 +28,7 @@ tag:
 | [md-common-config](md-common-config.md) | 公共配置模块 | Web/安全/消息/文件存储/MyBatis-Flex 装配，上下文拦截器 |
 | [md-cache-key](md-cache-key.md) | 缓存key模块 | 全平台缓存 key 表名常量与 Builder |
 | [md-enumeration-scanning](md-enumeration-scanning.md) | 枚举自动扫描模块 | 启动时扫描 BaseEnum 枚举，转下拉选项供前端使用 |
+| [md-resource-api](md-resource-api.md) | 接口权限共享Provider模块 | 实现 md-core 的 ApiPermProvider SPI，为单体与网关两种形态提供 uri 级鉴权数据 |
 
 ## 3. 与 mdp-base 的依赖关系
 
@@ -39,6 +40,7 @@ flowchart BT
         config[md-common-config]
         ck[md-cache-key]
         enum[md-enumeration-scanning]
+        rapi[md-resource-api]
     end
     subgraph mdp-base
         core[md-core]
@@ -64,6 +66,10 @@ flowchart BT
     config --> boot
     config --> log
     config --> dbflex
+    config --> rapi
+    rapi --> core
+    rapi --> pojo
+    rapi --> ck
 ```
 
 核心基类均来自 mdp-base，二开前建议先读：
@@ -108,7 +114,7 @@ com.mybatisflex.core.BaseMapper<T>
 ## 5. 阅读建议
 
 ::: tip 与其他文档的分工
-平台整体架构、单体/微服务双形态、facade 三件套机制见[架构介绍](../../info/架构介绍.md)；各服务端口与启动方式见[服务介绍](../../start/服务介绍.md)。本目录只讲 md-public 五个模块的内部实现与扩展方式，不复述上述内容。
+平台整体架构、单体/微服务双形态、facade 三件套机制见[架构介绍](../../info/架构介绍.md)；各服务端口与启动方式见[服务介绍](../../start/服务介绍.md)。本目录只讲 md-public 六个模块的内部实现与扩展方式，不复述上述内容。
 :::
 
 首次阅读推荐顺序：md-common-pojo（数据模型）→ md-common-dao（持久层）→ md-common-config（装配层）→ md-cache-key / md-enumeration-scanning（专项机制）。

@@ -10,11 +10,12 @@ tag:
 
 ## 1. 模块定位
 
-公共实体的持久层模块：存放 md-common-pojo 中核心实体（User、Org 等）的 MyBatis-Flex Mapper 接口与 XML。凡是需要直接访问用户/组织表的服务都依赖本模块，避免各服务重复编写基础查询。
+公共实体的持久层模块：存放 md-common-pojo 中核心实体（User、Org 等）的 MyBatis-Flex Mapper 接口。凡是需要直接访问用户/组织表的服务都依赖本模块，避免各服务重复编写基础查询。
 
 Maven 依赖：`md-common-pojo`、`md-db-mybatis-flex`、`md-mvc-flex`（均来自 md-public / mdp-base）。
 
-包根：`top.mddata.common.mapper`，仅 6 个接口，无实现类——MyBatis-Flex 在运行期生成代理。
+包根：`top.mddata.common.mapper`，仅 5 个接口，无实现类——MyBatis-Flex 在运行期生成代理。
+
 
 ## 2. 源码解读
 
@@ -33,9 +34,8 @@ flowchart LR
 
 | Mapper | 实体 | 自定义方法（注解 SQL） |
 | --- | --- | --- |
-| `UserMapper` | User | `resetPwErrorNum`/`incrPwErrorNumById`（@Update 登录错误次数）；`countByDayRange`/`countByState`/`countByType`/`countNewUsersInMonth`（@Select 统计） |
+| `UserMapper` | User | `resetPwErrorNum`/`incrPwErrorNumById`（@Update 登录错误次数）；统计 7 个：`countByDayRange`、`countByDayRangeGroupByNature`（按日×组织性质）、`countUsersInScope`（范围内总用户数）、`countByState`、`countBySex`、`countByNature`、`countNewUsersInMonth` |
 | `OrgMapper` | Org | `selectOrgByUserId`（用户拥有的机构）；`rankByUserCount`（部门用户排行） |
-| `OrgNatureMapper` | OrgNature | — |
 | `PositionMapper` | Position | — |
 | `UserOrgRelMapper` | UserOrgRel | — |
 | `UserRoleRelMapper` | UserRoleRel | — |
@@ -73,7 +73,7 @@ Mapper 接口本身不带 `@Mapper` 注解，而是靠 `@Repository` + md-common
 
 - **新增 Mapper**：`@Repository interface XxxMapper extends SuperMapper<Xxx>`，放入 `top.mddata` 包下即被扫描，无需其他注册。
 - **替换 SQL 实现**：注解 SQL 可平移进 XML（namespace 对齐接口全限定名），接口方法签名不变。
-- **数据权限**：查询走 QueryWrapper 时可被 `DataPermissionFilter`自动拼接权限条件；手写 SQL 不参与。
+- **数据权限**：查询走 QueryWrapper 时可被 mdp-base 的 DataScope 体系（`@DataScope` 注解 + `DataScopeAspect/Context` + `DataScopeInterceptor/SqlRewriter` + `DataScopeProvider` SPI，见 [md-db-mybatis-flex](../mdp-base/md-db-mybatis-flex.md)）自动拼接权限条件；手写 SQL 不参与。
 
 ## 5. 功能扩展建议
 

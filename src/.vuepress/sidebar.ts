@@ -139,6 +139,7 @@ export default sidebar({
             "md-common-config",
             "md-cache-key",
             "md-enumeration-scanning",
+            "md-resource-api",
           ],
         },
       ],
