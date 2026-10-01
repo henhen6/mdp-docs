@@ -131,7 +131,7 @@ sequenceDiagram
 |---|---|
 | 新增 SSO 客户端应用 | 服务端：`mdo_app` 表加记录（动态加载，无需重启）；客户端侧在 `sa-token.sso-clients` 加一份配置 |
 | 第三方系统接入 | 不想引 sa-token 生态的，直接按文档实现三个 HTTP 接口（getSsoAuthUrl / doLoginByTicket / pushC）——client 端本质就是这三个调用的封装，见[单点登录文档](../../integration/单点登录/ticket模式.md) |
-| OAuth2 接入 | 引 `sa-token-oauth2-client-starter`，`buildServerAuthorizeUrl` 构建授权地址 |
+| OAuth2 接入 | 引 `sa-token-oauth2-client-starter`，`SaOauth2ClientUtil.buildCodeAuthorizeUrl` 构建授权地址（隐藏式用 `buildImplicitAuthorizeUrl`），换票/刷新/回收等接口调用均已类型化封装 |
 | 动态增删客户端 | 重写 `SaSsoServerTemplate#getClient`（参考 CustomSaSsoServerTemplate 的做法） |
 
 ## 6. 二次开发注意事项

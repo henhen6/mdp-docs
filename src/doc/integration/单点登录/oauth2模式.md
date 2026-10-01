@@ -24,10 +24,16 @@ MDP 基于 sa-token OAuth2 实现，支持以下模式（应用可用的模式�
 | 模式 | grant_type / response_type | 说明 |
 | ---- | -------------------------- | ---- |
 | **授权码模式（推荐）** | `response_type=code` → `grant_type=authorization_code` | 最完整、最安全的模式，走完整授权流程 |
-| 隐藏式 | `response_type=token` | 授权后直接下放 access_token，无 code 环节，适合纯前端应用（无后台换 token） |
-| 密码式 | `grant_type=password` | 第三方后台直接用 MDP 用户的账号密码换 token（仅信任度极高的系统使用） |
-| 凭证式 | `grant_type=client_credentials` | 与用户无关，应用身份换 client_token（调用平台开放接口类场景） |
+| 隐藏式 | `response_type=token` | 授权后直接下放 access_token，无 code 环节，适合纯前端应用（无后台换 token）。**OAuth 2.1 已废弃，仅建议兼容旧客户端** |
+| 密码式 | `grant_type=password` | 第三方后台直接用 MDP 用户的账号密码换 token（仅信任度极高的第一方系统使用）。**OAuth 2.1 已废弃** |
+| 凭证式 | `grant_type=client_credentials` | 与用户无关，应用身份换 client_token（调用平台开放接口类场景），**不能用于用户登录** |
 | 刷新令牌 | `grant_type=refresh_token` | 用 refresh_token 换新的 access_token |
+
+::: tip 响应格式说明
+
+`/oauth2/token`、`/oauth2/refresh`、`/oauth2/client_token`、`/oauth2/userinfo`、`/oauth2/revoke` 等资源端点的响应遵循 **RFC 6749 / RFC 7009 / OIDC 标准**——顶层平铺 JSON（snake_case 命名），与平台内部接口的 `R<>` 包装风格**不同**；失败时返回标准错误格式 `{"error": "...", "error_description": "..."}` 并携带合适的 HTTP 状态码。使用本文提供的客户端工具包（`sa-token-oauth2-client-starter`）时无需关心解析细节，工具类已封装为类型化对象。
+
+:::
 
 ## 2. 接入前准备
 
@@ -100,28 +106,34 @@ grant_type=authorization_code&client_id={应用ID}&client_secret={应用秘钥}&
 
 > `client_id` / `client_secret` 也可放在请求头 `Authorization: Basic Base64(client_id:client_secret)` 中传递（二选一）。
 
-返回：
+返回（RFC 6749 §5.1 标准平铺 JSON，snake_case 命名，响应头带 `Cache-Control: no-store`）：
 
 ```json
 {
-  "code": 0,
-  "data": {
-    "tokenType": "bearer",
-    "accessToken": "xxx",
-    "refreshToken": "xxx",
-    "expiresIn": 3600,
-    "refreshExpiresIn": 2592000,
-    "clientId": "2014072300007148",
-    "scope": "userinfo,openid",
-    "openid": "xxx",
-    "unionid": "xxx"
-  }
+  "access_token": "xxx",
+  "token_type": "bearer",
+  "expires_in": 3600,
+  "refresh_token": "xxx",
+  "refresh_expires_in": 2592000,
+  "client_id": "2014072300007148",
+  "scope": "userinfo,openid",
+  "openid": "xxx",
+  "unionid": "xxx"
 }
 ```
 
-- `accessToken`：访问令牌，调用 `/oauth2/userinfo` 等资源接口使用；
-- `refreshToken`：刷新令牌，有效期更长；
-- `openid` / `unionid`：若 scope 中包含对应项才会返回（在额外字段中）。
+- `access_token`：访问令牌，调用 `/oauth2/userinfo` 等资源接口使用；
+- `refresh_token`：刷新令牌，有效期更长；
+- `openid` / `unionid`：若 scope 中包含对应项才会返回（作为扩展字段平铺在顶层）。
+
+失败时返回标准错误格式（RFC 6749 §5.2），并携带对应的 HTTP 状态码（如 400/401）：
+
+```json
+{
+  "error": "invalid_grant",
+  "error_description": "code 无效或已过期"
+}
+```
 
 ::: warning 注意：OAuth2 的 access_token ≠ 接口调用的 accessToken
 
@@ -148,32 +160,55 @@ MDP 平台存在两种名称相近、但**体系完全独立**的令牌，请勿
 ### 3.3 获取用户信息（步骤⑥）
 
 ```
-POST {MDP后端地址}/oauth2/userinfo
+GET 或 POST {MDP后端地址}/oauth2/userinfo
 （携带 access_token，要求 scope 包含 userinfo）
 ```
 
-返回用户的昵称、头像、邮箱、手机号等公开信息。**您系统内请以 openid（或 unionid）作为该用户的唯一标识来映射本系统账号，不要依赖昵称等可变字段。**
+返回（OIDC Core 标准平铺 JSON）：
+
+```json
+{
+  "sub": "1001",
+  "username": "zhangsan",
+  "name": "张三",
+  "email": "zhangsan@example.com",
+  "phone": "13800000000",
+  "sex": 1,
+  "avatar": 1234567890
+}
+```
+
+- `sub`：OIDC 必填的用户唯一标识，值为 MDP 用户 id 的字符串形式；
+- 其余为用户的登录账号、姓名、邮箱、手机号、性别、头像等公开信息。
+
+**您系统内请以 openid（或 unionid）作为该用户的唯一标识来映射本系统账号，不要依赖昵称等可变字段。**
 
 ## 4. 其他模式
 
 ### 4.1 隐藏式（implicit）
 
-授权页地址的 `response_type=token`，登录确认后浏览器直接被重定向到：
+授权页地址的 `response_type=token`，登录确认后浏览器直接被重定向到（token 在 URL 锚点中下发）：
 
 ```
-{您的回调地址}#access_token=xxx&token_type=bearer&expires_in=3600&state=xxx
+{您的回调地址}#token=xxx&state=xxx
 ```
 
-适用于纯前端应用（无法安全保管 client_secret 的场景）。无 refresh_token。
+回跳地址中只有 access_token（无 openid），需再调 `/oauth2/userinfo` 获取用户信息（以 `sub` 即 MDP 用户 id 映射本地账号）。适用于纯前端应用（无法安全保管 client_secret 的场景），无 refresh_token。
+
+::: warning
+token 暴露在浏览器地址栏，该模式已被 OAuth 2.1 废弃，仅建议用于兼容旧客户端；新接入请使用授权码模式。
+:::
 
 ### 4.2 密码式（password）
 
 ```
 POST /oauth2/token
-grant_type=password&client_id=...&client_secret=...&username={MDP账号}&password={MDP密码}&scope=userinfo
+grant_type=password&client_id=...&client_secret=...&username={MDP账号}&password={MDP密码}&scope=userinfo,openid
 ```
 
-仅在高度可信的系统中使用（明文传递用户密码，要求 HTTPS）。
+响应格式与授权码模式一致（`openid` / `unionid` 随扩展字段返回）。
+
+仅在高度可信的第一方系统中使用（您的服务端能接触用户明文密码，要求 HTTPS）。该模式已被 OAuth 2.1 废弃。
 
 ### 4.3 凭证式（client_credentials）
 
@@ -182,7 +217,7 @@ POST /oauth2/client_token
 grant_type=client_credentials&client_id=...&client_secret=...&scope=...
 ```
 
-返回 client_token，代表**应用自身**（而非某个用户）的身份。
+返回标准令牌响应（`access_token` 即 client_token），代表**应用自身**（而非某个用户）的身份，无 openid，**不能用于用户登录**。
 
 ## 5. 令牌维护
 
@@ -193,12 +228,16 @@ POST /oauth2/refresh
 grant_type=refresh_token&client_id=...&client_secret=...&refresh_token={刷新令牌}
 ```
 
-### 5.2 回收 token（单点注销）
+### 5.2 回收 token（单点注销，RFC 7009）
 
 ```
 POST /oauth2/revoke
-client_id=...&client_secret=...&access_token={访问令牌}
+client_id=...&client_secret=...&token={访问令牌或刷新令牌}&token_type_hint=access_token
 ```
+
+- `token_type_hint` 可空，取值 `access_token` / `refresh_token`，仅作为查找提示；
+- 撤销 access_token 时会**级联撤销**关联的 refresh_token，避免残留可换发新 token 的凭证；
+- 无论令牌是否存在、是否已失效，均固定返回 200 空响应（不泄露令牌存在性）；仅当 client 凭证无效时返回标准错误。
 
 用户在您的系统注销时，建议调用此接口使 token 失效。OAuth2 模式下各应用持有独立的 access_token，退出时回收自己的 token 即可，不涉及 ticket 模式的「全端注销推送」机制。
 
@@ -208,11 +247,11 @@ client_id=...&client_secret=...&access_token={访问令牌}
 | ---- | ------ | ---- |
 | `POST /oauth2/getRedirectUri` | MDP 授权页内部 | 登录后构建带 code/token 的重定向地址（第三方无需调用） |
 | `POST /oauth2/getConfirmInfo` / `POST /oauth2/confirm` | MDP 授权页内部 | 确认授权页信息 / 确认授权（第三方无需调用） |
-| `POST /oauth2/token` | **第三方后台** | code 换 token / 密码式换 token |
+| `POST /oauth2/token` | **第三方后台** | code 换 token / 密码式换 token（标准平铺 JSON 响应） |
 | `POST /oauth2/client_token` | **第三方后台** | 凭证式获取 client_token |
-| `POST /oauth2/refresh` | **第三方后台** | 刷新 access_token |
-| `POST /oauth2/revoke` | **第三方后台** | 回收 access_token |
-| `POST /oauth2/userinfo` | **第三方后台** | 获取用户信息（需 userinfo scope） |
+| `POST /oauth2/refresh` | **第三方后台** | 刷新 access_token（仅接受 `grant_type=refresh_token`） |
+| `POST /oauth2/revoke` | **第三方后台** | 回收 access_token / refresh_token（RFC 7009，固定返回 200） |
+| `GET / POST /oauth2/userinfo` | **第三方后台** | 获取用户信息（需 userinfo scope，OIDC 标准响应含 `sub`） |
 
 ## 7. 常见问题
 

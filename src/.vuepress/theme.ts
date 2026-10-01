@@ -165,11 +165,14 @@ export default hopeTheme({
     notice: [
       {
         path: "/",
-        title: "将在2026.8.20推出 v1.5.0",
+        title: "2026.10.1推出 v1.6.0",
         content:
-            '<ul><li>1. 统计大屏</li>' +
-            '<li>2. 文件管理（分片上传、断点续传、大文件上传）</li>'+
-            '<li>3. 开放平台 功能重构</li>'+
+            '<ul>' +
+            '<li>1. 用户体系与组织权限重构</li>' +
+            '<li>2. 完美支持数据权限（按角色 × 菜单授权）</li>'+
+            '<li>3. 接口权限 配置、授权、鉴权全链路打通（资源关联接口）</li>'+
+            '<li>4. 统计大屏按组织统计数据</li>'+
+            '<li>5. OAuth2认证登录功能完善，提供完善的客户端实例代码</li>'+
             '</ul><div class="addthis_inline_follow_toolbox_qssu"></div>',
         actions: [
           {
