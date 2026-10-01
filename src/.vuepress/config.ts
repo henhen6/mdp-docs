@@ -26,7 +26,7 @@ function resolveMarkdownChartClient(): string {
 export default defineUserConfig({
   base: BASE,
   title: BASE === "/" ? "MDP" : "MDP-V" + BASE.substring(1, BASE.length - 1),
-
+  port: 12340,
   lang: "zh-CN",
   description: "主数据平台",
 
