@@ -81,6 +81,22 @@ export default sidebar({
       ],
     },
     {
+      text: "开发进阶",
+      prefix: "advanced/",
+      collapsible: COLLAPSIBLE,
+      children: [
+        "",
+        "用户和组织体系",
+        "菜单管理",
+        "角色管理",
+        "菜单和按钮权限",
+        "接口权限",
+        "数据权限",
+        "字段权限",
+        "数据统计",
+      ],
+    },
+    {
       text: "后端源码分析",
       prefix: "source/",
       collapsible: COLLAPSIBLE,
