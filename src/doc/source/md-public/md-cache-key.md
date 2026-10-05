@@ -19,7 +19,7 @@ top.mddata.common.cache
 ├── CacheKeyTable.java                # 表名常量接口（CAPTCHA/FORGET_PWD + Console/Workbench/Open 嵌套）
 ├── console/
 │   ├── organization/                 # User/Org/UserOrg CacheKeyBuilder
-│   ├── permission/                   # MenuDataScope/RoleDataScope/RoleResource/ResourceApiAll/UserResourceApi CacheKeyBuilder（数据权限与接口权限体系的缓存载体）
+│   ├── permission/                   # MenuDataScope/RoleDataScope/RoleResource/ResourceApiAll/UserResourceApi/ResourceFieldUriMenu/UserFieldPerm CacheKeyBuilder（数据/接口/字段权限体系的缓存载体）
 │   └── system/                        # Config/ConfigUniqKey/DictItemHash CacheKeyBuilder
 ├── system/                           # Role/UserRoleRel/UserRoleCodeRel CacheKeyBuilder
 ├── workbench/                        # Captcha/ForgetPassword/SsoUser{Phone,Email,UserName} CacheKeyBuilder
@@ -28,7 +28,7 @@ top.mddata.common.cache
 
 ### 2.1 两个组成部分
 
-**① CacheKeyTable（表名常量）**：`interface CacheKeyTable` 用嵌套接口按服务域分组（`Console.DICT_ITEM`、`Console.PARAM`、`Console.ROLE_DATA_SCOPE`、`Console.RESOURCE_MENU`、`Console.RESOURCE_API_ALL`、`Console.USER_RESOURCE_API`、`Workbench.USER`、`Open.ACCESS_TOKEN`...），值即 key 中的"表名"段。
+**① CacheKeyTable（表名常量）**：`interface CacheKeyTable` 用嵌套接口按服务域分组（`Console.DICT_ITEM`、`Console.PARAM`、`Console.ROLE_DATA_SCOPE`、`Console.RESOURCE_MENU`、`Console.RESOURCE_API_ALL`、`Console.USER_RESOURCE_API`、`Console.RESOURCE_FIELD_URI_MENU`、`Console.USER_FIELD_PERM`、`Workbench.USER`、`Open.ACCESS_TOKEN`...），值即 key 中的"表名"段。
 
 **② Builder（每个缓存一个类）**：统一实现 md-core 的 `CacheKeyBuilder`（函数式接口），结构固定：
 
@@ -40,7 +40,7 @@ public class AccessTokenCkBuilder implements CacheKeyBuilder {
 }
 ```
 
-`AccessTokenCkBuilder`（`AccessTokenCkBuilder.java:35-37`）的复合 key 是 `{appKey}:{token}`——**同一 token 不同应用不互通**，防止跨应用冒用；过期约 2 小时（与开放平台 accessToken 有效期一致）。
+`AccessTokenCkBuilder`（`AccessTokenCkBuilder.java:33-35`）的复合 key 是 `{appKey}:{token}`——**同一 token 不同应用不互通**，防止跨应用冒用；过期约 2 小时（与开放平台 accessToken 有效期一致）。
 
 ### 2.2 命名规范（CacheKeyBuilder javadoc 约定）
 

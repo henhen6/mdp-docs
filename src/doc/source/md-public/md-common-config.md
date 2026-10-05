@@ -38,7 +38,7 @@ tag:
 | 类 | 说明 |
 | --- | --- |
 | `SystemAutoConfiguration` | `@ConditionalOnWebApplication` + `@EnableConfigurationProperties({MsgProperties, SystemProperties})`；无条件注册 `MethodLogAspect`（注释说明：不按 recordLog 条件注册，因 SystemProperties 是 @RefreshScope 代理，运行期开关可被 Nacos 热刷新）；注册 `AlwaysConfigurer` Bean |
-| `WebConfiguration` | 继承 md-boot 的抽象类 `BaseConfig`（获得 4 个日期 Converter 注册）；`@EnableConfigurationProperties(IgnoreProperties.class)`；注入 `ApiPermSupport` 传给 `TokenContextFilterConfigurer`；`addViewControllers` 把 `/` 转发到 `/index`；`addResourceHandlers("/**" → classpath:/)` |
+| `WebConfiguration` | 继承 md-boot 的抽象类 `BaseConfig`（获得 4 个日期 Converter 注册）；`@EnableConfigurationProperties(IgnoreProperties.class)`；注入 `ApiPermSupport` 传给 `TokenContextFilterConfigurer`；`addViewControllers` 把 `/` 转发到 `/index`；覆写了 `addResourceHandlers` 但当前为空实现（静态资源走默认配置） |
 | `MybatisFlexConfiguration` | 独立 `@Configuration`：`@EnableConfigurationProperties(DatabaseProperties.class)` + `@MapperScan`；数据库 id 策略、审计、逻辑删除等能力由 md-db-mybatis-flex 的 `MdMybatisFlexConfiguration extends DbConfiguration` 自动装配 |
 | `ExceptionConfiguration` | 继承 md-boot 的抽象类 `AbstractGlobalExceptionHandler`。 |
 | `ApiPermSupport` | `apiperm/` 包，单体版接口权限判定入口：未登录跳过 → `isIgnoreUriAuth` 白名单跳过 → `ApiPermChecker.check(...)`，被 `TokenContextFilter` 的 auth 阶段调用 |

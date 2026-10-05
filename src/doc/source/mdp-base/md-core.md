@@ -27,6 +27,7 @@ exception/     # 异常体系 + code/ExceptionCode
 interfaces/    # BaseEnum、echo/{EchoService,LoadService,EchoVO}、validator/IValidatable
 model/         # Kv、cache/{CacheKey,CacheHashKey,CacheKeyBuilder}、log/OptLogDTO
 apiperm/       # 接口权限契约：engine/ApiPermChecker、spi/ApiPermProvider、model/{ApiPattern,UserApiPerm}
+fieldperm/     # 字段权限契约：engine/{FieldPermEngine,Masker,BuiltinMasker}、spi/FieldPermProvider、model/{FieldRule,UserFieldPerm}
 util/          # ContextUtil（线程上下文）、StrPool、LogSuppressUtil
 ```
 
@@ -60,7 +61,7 @@ flowchart BT
   - 内置校验组接口 `Save` / `Update`（Update 组下 id `@NotNull`）
   - 全部公共字段名都定义了常量（`CREATED_AT="createdAt"`、`CREATED_AT_FIELD="created_at"`、`DELETED_BY_FIELD="deleted_by"` 等），写 QueryWrapper 时引用常量而非硬编码字符串
 - `SuperEntity.java`：追加 `updatedAt`/`updatedBy`，普通业务表实体继承它
-- `TreeEntity.java`：追加 `parentId`、`weight`（排序号）、`children`（`@Column(ignore=true)` 不落库）、`parent`；实现 `Comparable` 按 weight 排序，提供 `setParent`/`addChildren` 维护父子引用
+- `TreeEntity.java`：追加 `parentId`、`weight`（排序号）、`children`（`@Column(ignore=true)` 不落库）、`parent`；树表字段常量（`PARENT_ID`/`WEIGHT`/`PARENT_ID_FIELD`/`WEIGHT_FIELD`）也定义在本类；实现 `Comparable` 按 weight 排序，提供 `setParent`/`addChildren` 维护父子引用
 
 ### 2.3 异常体系
 
@@ -79,7 +80,7 @@ BaseException（接口，含常量 BASE_VALID_PARAM=-9）
 
 `BizException` 静态工厂：`wrap()`（包装任意异常/异常码）、`validFail()`（固定 -9 参数校验失败）。
 
-`ExceptionCode` 编码规则（类 Javadoc）：系统级用负数（-1 系统繁忙、-3 参数解析、-4 SQL、-5 NPE、-9 参数校验、-13 JSON 解析）；HTTP 语义用标准码（401/403/404/405/429/500）；业务级用 9 位分段码 `[系统]_[模块]_[功能]`（如 `100_000_001` 账号被禁用）；JWT 相关用 40000~40009。支持 `build(msg, params)` / `param(params)` 格式化消息。
+`ExceptionCode` 编码规则（类 Javadoc）：系统级用负数（-1 系统繁忙、-3 参数解析、-4 SQL、-5 NPE、-9 参数校验、-13 JSON 解析）；HTTP 语义用标准码（200/400/401/403/404/405/429/500/502/504）；业务级用 9 位分段码 `[系统]_[模块]_[功能]`（如 `100_000_001` 账号被禁用）；JWT 相关用 40000~40009。支持 `build(msg, params)` / `param(params)` 格式化消息。
 
 ### 2.4 线程上下文 ContextUtil
 
@@ -185,11 +186,24 @@ key 拼接逻辑见私有方法 `getKey()`（`CacheKeyBuilder.java:142-166`）�
 | `model/ApiPattern.java` | record：URI Ant 模式 + 请求方式匹配（`ALL` 通配） |
 | `model/UserApiPerm.java` | 用户接口放行集（`operationsAdmin` 运营者豁免标记 + `patterns`，Redis 缓存模型） |
 
-### 2.8 其他
+### 2.8 字段权限契约（fieldperm/）
+
+`fieldperm` 包定义**列级字段权限**（响应层隐藏/脱敏）的平台契约，与 apiperm 同为"纯逻辑引擎 + SPI 数据提供"结构（数据实现见 [md-resource-api](../md-public/md-resource-api.md) §2.4，Web 入口 `FieldPermAdvice` 在 [md-mvc-flex](md-mvc-flex.md)，使用指南见[字段权限](../../advanced/字段权限.md)）：
+
+| 类 | 说明 |
+| --- | --- |
+| `engine/FieldPermEngine.java` | 执行引擎（纯函数，无 web/DB 依赖）。遍历响应对象树（`R.data`、mybatis-flex `Page`、集合/Map/嵌套 VO），对命中规则的属性隐藏置 null / 脱敏变形；防护阈值 `DEFAULT_MAX_DEPTH=5`、`DEFAULT_MAX_OBJECTS=5000`（超限告警截断）、`IdentityHashMap` 防循环引用；按类名识别 Page、按包名跳过 JDK/框架类（`SKIP_PACKAGES`），不引依赖 |
+| `engine/Masker.java` | `@FunctionalInterface` 脱敏函数 SPI |
+| `engine/BuiltinMasker.java` | 内置 9 条脱敏规则（规则名与 mybatis-flex `Masks` 生态对齐）：mobile / fixed_phone / id_card_number / chinese_name / address / email / password / car_license / bank_card_number；`register(name, rule)` 支持自定义/同名覆盖 |
+| `model/FieldRule.java` | 单字段规则（`RULE_TYPE_HIDE=10` 隐藏 / `RULE_TYPE_MASK=20` 脱敏 + maskRule，Redis 缓存模型） |
+| `model/UserFieldPerm.java` | 用户字段受限集（**拒绝模型**：`operationsAdmin` 豁免标记 + `menuRules: Map<menuId, Map<property, FieldRule>>`） |
+| `spi/FieldPermProvider.java` | 数据提供方 SPI：`isAuthEnabled()` / `findMenuId(uri, method)`（URI → 沿菜单上级链找最近字段规则菜单）/ `findUserPerm(userId)` |
+
+### 2.9 其他
 
 - `constant/Constants.java`：`PROJECT_PREFIX = "mdp"`（**全平台配置前缀之源**）、`UTIL_PACKAGE = "top.mddata"`（组件/Mapper 扫描根包）、`ENABLED = "enabled"`
 - `model/Kv.java`：键值对通用对象（`key`/`value` 两字段，链式 setter + Builder，equals/hashCode 只按 key）；`model/log/OptLogDTO.java`：操作日志传输对象（md-log-starter 组装后随事件发布）
-- `util/LogSuppressUtil.java`：打标当前线程「抑制 SQL 审计输出」（日志落库链路自身不再产生审计噪音）
+- `util/LogSuppressUtil.java`：`suppress()`/`release()`/`isSuppressed()` 三方法打标当前线程「抑制 SQL 审计输出」（日志落库链路自身不再产生审计噪音）；**线程池复用线程，调用方必须在 finally 中 `release()`**，否则标记泄漏给同线程的下一个任务
 - `util/StrPool.java`：常用字符串常量池；`base/ExtraParams.java`：额外参数容器
 
 ## 3. 可配置参数
@@ -212,6 +226,8 @@ key 拼接逻辑见私有方法 `getKey()`（`CacheKeyBuilder.java:142-166`）�
 | `BaseEnum` | 业务枚举实现它，自动获得 eq 比较、枚举扫描、Option 转换能力 |
 | `CacheKeyBuilder` | 实现它定义新缓存 key（getTable/getExpire） |
 | `IValidatable` | 实体自校验逻辑入口 |
+| `Masker` | `BuiltinMasker.register(name, rule)` 注册自定义脱敏规则（可同名覆盖内置） |
+| `FieldPermProvider` | 实现 SPI 更换字段权限数据源（参考 md-resource-api 的 `FieldPermProviderImpl`） |
 
 ## 5. 功能扩展建议
 
@@ -226,6 +242,7 @@ key 拼接逻辑见私有方法 `getKey()`（`CacheKeyBuilder.java:142-166`）�
 
 ::: warning 高频坑点
 1. **ContextUtil 必须清理**：ThreadLocal 用完不调 `remove()` 会内存泄漏 + 线程池串数据；平台拦截器已统一清理，自行开线程时需手动搬运（参考 `BaseEventVO.copy()/write()` 的做法）。
+2. **LogSuppressUtil 必须 finally 中 release()**：线程池复用线程，只 `suppress()` 不 `release()` 会把「抑制审计」标记泄漏给同线程的后续任务。
 3. **errorMsg 只在 dev/test 返回**：全局异常处理器根据 `spring.profiles.active` 决定是否回填，生产排查问题靠服务端日志而非响应体。
 4. **TreeEntity 的 children/parent 不落库也不出参**（`@Column(ignore=true)`，`parent` 另有 `@JsonIgnore`），需要持久化父子关系时用 `parentId` 字段；`weight` 排序值别与业务「权重」概念混淆。
 5. **本模块被全平台依赖**：任何对既有类签名/常量值的修改都是破坏性变更，升级平台版本时优先 diff 此模块。

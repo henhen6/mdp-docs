@@ -27,7 +27,9 @@ top.mddata.base.mvcflex
 │   ├── PageParams.java              # 分页入参（current/size/sort/order + model/extra）
 │   ├── PageFlexUtil.java           # 分页记录类型转换（Entity→Vo）
 │   └── DownloadVo.java             # 文件下载响应载体
-├── advice/UpdateFieldAdvice.java   # 更新端点请求体字段采集（@ControllerAdvice）
+├── advice/
+│   ├── UpdateFieldAdvice.java      # 更新端点请求体字段采集（@ControllerAdvice）
+│   └── FieldPermAdvice.java        # 字段权限响应处理（ResponseBodyAdvice，见 2.5）
 ├── context/UpdateFieldContext.java # 本次请求提交字段集合的上下文
 └── utils/WrapperUtil.java          # QueryWrapper 动态条件构造工具
 ```
@@ -62,7 +64,7 @@ public interface FooMapper extends SuperMapper<Foo> { }
 `SuperController` 只有两个泛型参数（`S extends SuperService<Entity>`、`Entity extends BaseEntity<?>`），类内只提供 `superService` 注入、`getEntityClass()`、`getSuperService()`——**继承它不会得到任何 REST 端点**，`/save`、`/update`、`/page`、`/delete` 等接口全部由业务 Controller 手写（md-codegen 生成的也是手写形态）。它存在的意义是统一注入与类型约束，不是"开箱即用的 CRUD"。
 :::
 
-`BaseController` 接口提供两个 default 能力：`getUserId()`（从 `ContextUtil` 取当前用户）、`write(byte[], fileName, response)`（文件/zip 下载响应写出，与 `DownloadVo` 配套）。
+`BaseController` 接口提供两个 default 能力：`getUserId()`（从 `ContextUtil` 取当前用户）、`write(byte[], fileName, response)`（文件/zip 下载响应写出，与 `DownloadVo` 配套）；接口本身还声明了 `getSuperService()`/`getEntityClass()` 两个抽象方法（由 SuperController 实现）。
 
 ### 2.2 SuperService 的 DTO 入口与缓存体系
 
@@ -85,7 +87,7 @@ public interface FooMapper extends SuperMapper<Foo> { }
 | `findCollectByIds(keyIdList, cacheBuilder, loader)` | 按自定义 key 批量查缓存并汇总 |
 | `refreshCache / clearCache / delCache / setCache` | 缓存刷新与淘汰 |
 
-`SuperServiceImpl` 通过钩子方法 `cacheKeyBuilder()` 实现**缓存感知的 CRUD 重写**：返回 null（默认）时等价于纯 DB 操作；子类返回具体的 `CacheKeyBuilder` 后，`remove`/`update` 系列方法会先查后删并淘汰缓存、`saveBatch` 批量写缓存。`saveBefore`/`saveAfter`/`updateBefore`/`updateAfter` 四个钩子留给业务在 DTO 转换前后插入自定义逻辑（如审计、缓存联动）。
+`SuperServiceImpl` 通过钩子方法 `cacheKeyBuilder()` 实现**缓存感知的 CRUD 重写**：返回 null（默认）时等价于纯 DB 操作；子类返回具体的 `CacheKeyBuilder` 后，`remove`/`update` 系列方法会先查后删并淘汰缓存、`saveBatch` 批量写缓存（`save()` 单条不写缓存，由 `getByIdCache` 回源时写入）。`saveBefore`/`saveAfter`/`updateBefore`/`updateAfter` 四个钩子留给业务在 DTO 转换前后插入自定义逻辑（如审计、缓存联动）。
 
 ### 2.3 选择性更新机制（UpdateFieldAdvice + UpdateEntity）
 
@@ -101,7 +103,7 @@ public interface FooMapper extends SuperMapper<Foo> { }
       无字段集合时（内部调用、测试）：维持全量拷贝旧语义
 ```
 
-最终语义：**只更新提交的字段；提交为 null 的字段显式置空；未提交的字段不动**。
+最终语义：**只更新提交的字段；提交为 null 的字段显式置空；未提交的字段不动**。空请求体经 `UpdateFieldAdvice.handleEmptyBody` 得到空集合（视为"提交了但全空"，不会误走全量拷贝）。
 
 ### 2.4 分页与动态查询约定
 
@@ -116,11 +118,30 @@ public interface FooMapper extends SuperMapper<Foo> { }
 
 分页对象 `Page` 是 `com.mybatisflex.core.paginate.Page`（只有 `R` 来自 md-core）；业务 Controller 手写 `new Page<>(current, size)` 分页查询，`PageFlexUtil.toBeanPage(page, voClass)` 负责把分页记录从 Entity 转成 Vo。
 
-`WrapperUtil` 提供三个公开能力：
+`WrapperUtil` 提供四个公开能力：
 
-- **`buildWrapperByExtra`**：按 `extra` 参数的 `字段_操作符` 后缀约定动态拼条件，支持 `st/ed/start/end/ge/gt/lt/le/eq/ne/like/likeLeft/likeRight/in`（如 `createdAt_st` / `name_like`）；
+- **`buildWrapperByExtra`**：按 `extra` 参数（入参类型为 md-core 的 `ExtraParams`）的 `字段_操作符` 后缀约定动态拼条件，支持 `st/ed/start/end/ge/gt/lt/le/eq/ne/like/likeLeft/likeRight/in`（如 `createdAt_st` / `name_like`）。其中 `st/ed` 走整天边界（`DateUtils.getStartTime/getEndTime`），`start/end` 走精确时间点；
 - **`buildWrapperByOrder`**：多字段排序（sort/order 逗号分隔）；
-- **`buildOperators`**：实体的 String 字段自动用 LIKE；`getColumnByProperty` 做字段名 → 列名校验，非法字段抛 `BizException`（防注入）。
+- **`buildOperators`**：实体的 String 字段自动用 LIKE；
+- **`getColumnByProperty`**：字段名 → 列名校验，非法字段抛 `BizException`（防注入）。
+
+### 2.5 字段权限响应处理（FieldPermAdvice）
+
+`advice/FieldPermAdvice.java`（@since 2026-10-02，`@ControllerAdvice` + `ResponseBodyAdvice<Object>`）是**字段权限体系的 Web 入口**：在 JSON 序列化写出前原地改写响应体，对当前用户受限的字段执行隐藏（置 null）/脱敏（变形）。决策链：总开关（`mdp.ignore.field-auth-enabled`）→ 登录态 → URI 归一化（复用 `ApiPermChecker.normalizePath`）→ 缓存A 反查字段规则菜单 → 缓存B 取用户受限集 → `FieldPermEngine.apply(body, rules)`；响应体为 `byte[]`/`Resource`（文件下载）直接放行。
+
+体系分工（本模块只有入口）：
+
+| 层 | 位置 |
+| --- | --- |
+| 引擎 / 模型 / SPI（`FieldPermEngine`、`BuiltinMasker`、`FieldRule`、`UserFieldPerm`、`FieldPermProvider`） | [md-core](md-core.md) 的 `fieldperm/` 包 |
+| Web 入口 `FieldPermAdvice` | 本模块 |
+| SPI 数据实现 `FieldPermProviderImpl`（缓存A/B） | [md-resource-api](../md-public/md-resource-api.md) |
+
+完整机制（配置/授权/鉴权/缓存失效）见[字段权限](../../advanced/字段权限.md)。
+
+::: warning 装配方式与 Bean 依赖
+本模块**没有** `AutoConfiguration.imports`，`FieldPermAdvice`/`UpdateFieldAdvice` 均靠应用的组件扫描（`top.mddata` 包）注册；且 `FieldPermAdvice` 构造器要求容器中存在 `FieldPermProvider`、`ApiPermProvider` 两个 Bean（由 md-resource-api 提供）——**未引入提供方实现的应用会因缺 Bean 启动失败**。
+:::
 
 ## 3. 可配置参数
 

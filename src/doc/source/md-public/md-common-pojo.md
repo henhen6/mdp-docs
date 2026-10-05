@@ -40,6 +40,10 @@ flowchart LR
 ```java
 @Table(UserBase.TABLE_NAME)
 public class User extends UserBase {
+    /** 组织性质（注册身份载体，不持久化）[1-总公司 90-开发者 99-运营] */
+    @Column(ignore = true)
+    private Integer nature;
+
     /** 用户拥有的部门 */
     @RelationOneToMany(
             selfField = "id",
@@ -153,6 +157,7 @@ public enum StateEnum implements BaseEnum<Boolean> {
 | `auth-enabled` | `true` | 是否启用 uri 权限与前端按钮权限校验，`false` 则完全不校验 |
 | `case-sensitive` | `false` | 前端按钮权限是否区分大小写 |
 | `not-config-uri-allow` | `true` | 未纳管的接口是否放行（联调期 true；白名单严格模式 false） |
+| `field-auth-enabled` | `true` | 是否启用字段权限鉴权（响应层字段隐藏/脱敏），false 所有用户看到字段原文（新功能灰度期可关）；消费方见[字段权限](../../advanced/字段权限.md) |
 | `gateway-prefix` | `api` | 接口权限路径归一化时剥离的网关前缀 |
 | `service-prefixes` | `{console, workbench, open}` | 归一化时剥离第一段的服务前缀集合 |
 | `base-uri` | 内置集合 | 永久放行：静态资源(css/js/html/图片、`/**/static/**`、`/**/public/**`)、`/**/anno/**`、`/**/druid/**`、`/actuator/**`、api-docs/swagger、`/**/form/validator/**`、`/error` 等 |

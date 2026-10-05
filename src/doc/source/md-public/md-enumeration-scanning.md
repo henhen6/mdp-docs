@@ -16,10 +16,10 @@ tag:
 
 `top.mddata.common.enumeration.EnumService`（`@Component`）核心逻辑：
 
-1. `@PostConstruct init()`：读 `SystemProperties.enumPackage`（即 `mdp.system.enumPackage`）；未配置仅打 warn 跳过（`EnumService.java:83-87`）；
+1. `@PostConstruct init()`：读 `SystemProperties.enumPackage`（即 `mdp.system.enumPackage`）；未配置仅打 warn 跳过（`EnumService.java:45-49`）；
 2. `ClassUtils.scanPackage(enumPackage, CLASS_FILTER)` 扫描，`CLASS_FILTER`（`EnumService.java:38`）三条件：非 null、是枚举、`BaseEnum` 的实现且非接口；
 3. 对每个枚举：
-   - 类上 `@Schema(description)` 作为分组 label——**没有注解就 warn 并降级用类名**（`EnumService.java:106`）；
+   - 类上 `@Schema(description)` 作为分组 label——**没有注解就 warn 并降级用类名**（`EnumService.java:67-71`）；
    - value = 枚举类 simpleName，remark = `DataTypeEnum` 匹配的数据类型 code；
    - 值集合 = `Option.mapOptions(枚举常量)`（code→value，desc→label）；
 4. 结果存静态 `Map<Option, List<Option>> ENUM_MAP`；

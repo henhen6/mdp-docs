@@ -50,6 +50,7 @@ flowchart BT
         dbflex[md-db-mybatis-flex]
         log[md-log-starter]
         sop[md-sop-support]
+        cachestarter[md-cache-starter]
     end
 
     pojo --> core
@@ -66,6 +67,7 @@ flowchart BT
     config --> boot
     config --> log
     config --> dbflex
+    config --> cachestarter
     config --> rapi
     rapi --> core
     rapi --> pojo
