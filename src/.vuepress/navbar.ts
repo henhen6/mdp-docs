@@ -33,6 +33,7 @@ export default navbar([
   {
     text: "历史文档",
     children: [
+      { text: "1.6.0", link: "http://mddata.top/1.6.0/" },
       { text: "1.5.1", link: "http://mddata.top/1.5.1/" },
     ],
   },
