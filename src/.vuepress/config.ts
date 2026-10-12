@@ -32,6 +32,10 @@ export default defineUserConfig({
 
   theme,
 
+  head: [
+    ["script", { src: "/js/baidu.js" }],
+  ],
+
   // 和 PWA 一起启用
   shouldPrefetch: false,
   pagePatterns: ["**/*.md", "!*.snippet.md", "!.vuepress", "!node_modules"],
