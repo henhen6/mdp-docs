@@ -13,9 +13,9 @@ MDP 前端（`mdp-vben`）基于 [Vue Vben Admin](https://doc.vben.pro/) 5.x 深
 
 | 应用 | 目录 | 开发端口 | 线上演示 | 定位 |
 | ---- | ---- | -------- | -------- | ---- |
-| 工作台 | `apps/web-workbench` | 7700 | [workbench.mddata.top](http://workbench.mddata.top) | 统一登录页、用户门户（消息、日志、安全设置） |
-| 控制台 | `apps/web-console` | 7710 | [console.mddata.top](http://console.mddata.top) | 后台管理（组织、权限、消息、统计、系统管理） |
-| 开发者平台 | `apps/web-open` | 7720 | [open.mddata.top](http://open.mddata.top) | 开放平台控制台（应用、秘钥、文档、事件订阅） |
+| 工作台 | `apps/web-workbench` | 7700 | [workbench.mddata.top](https://workbench.mddata.top) | 统一登录页、用户门户（消息、日志、安全设置） |
+| 控制台 | `apps/web-console` | 7710 | [console.mddata.top](https://console.mddata.top) | 后台管理（组织、权限、消息、统计、系统管理） |
+| 开发者平台 | `apps/web-open` | 7720 | [open.mddata.top](https://open.mddata.top) | 开放平台控制台（应用、秘钥、文档、事件订阅） |
 
 ## 2. 技术栈
 
