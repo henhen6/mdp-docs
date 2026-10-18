@@ -29,7 +29,7 @@ tag:
 | ---- | ---- | ------------ |
 | `apps/web-workbench` | `@vben/web-workbench` | 约 28 个页面，业务菜单主要由后端动态下发 |
 | `apps/web-console` | `@vben/web-console` | 约 182 个页面，mdp 的主要管理端 |
-| `apps/web-open` | `@vben/web-open` | 约 34 个页面，开放平台控制台 |
+| `apps/web-open` | `@vben/web-open` | 约 55 个页面，开放平台控制台 |
 
 三个应用的结构、技术栈完全一致，仅 `.env` 与业务模块不同。
 
@@ -41,7 +41,7 @@ tag:
 import { message } from 'antdv-next';
 ```
 
-表单、表格的组件适配层在各应用的 `src/adapter/` 与 `packages/effects/components/adapter/` 中完成映射，业务代码用法与官方文档一致，只是底层组件库不同。
+表单、表格的组件适配层统一在 `packages/effects/components/src/adapter/` 中完成映射（三个应用共用，应用内无 `src/adapter/` 目录），业务代码用法与官方文档一致，只是底层组件库不同。
 
 ## 4. 登录：SSO ticket 单点登录
 
@@ -96,7 +96,7 @@ config.headers.gray_version = VITE_GLOB_GRAY_VERSION;
 - **boot（单体）**：所有服务合并为一个 boot-server，请求时 **rewrite 去掉服务前缀**（`/workbench/**` → `/**`）；
 - **cloud（微服务）**：请求走网关，**保留服务前缀**，由网关按 `/workbench`、`/console`、`/open` 路由到对应服务。
 
-服务前缀枚举定义在 `packages/constants` 新增的 `ServicePrefixEnum`。代理逻辑在 `internal/vite-config/src/config/application.ts`，各应用 `.env.development` 的 `VITE_PROXY` 按模式配置了两套代理，对应 `dev:boot` / `dev:cloud` 两个启动脚本。详见 [前端配置](../../config/前端配置.md)。
+服务前缀枚举定义在 `packages/constants` 新增的 `ServicePrefixEnum`。boot/cloud 双代理由**各应用自己的 `vite.config.ts`** 中的 `createProxy()` 实现，依据 `.env.development` 的 `VITE_PROXY`（含 cloud/boot 两套代理目标），对应 `dev:boot` / `dev:cloud` 两个启动脚本。详见 [前端配置](../../config/前端配置.md)。
 
 ## 7. packages 层改动清单
 
@@ -110,9 +110,9 @@ config.headers.gray_version = VITE_GLOB_GRAY_VERSION;
 | `constants` | 新增 `ServicePrefixEnum`、`dict.ts` |
 | `stores` | 新增 `api-cache.ts`、`dict.ts`（字典 store）；改造 `access.ts`、`user.ts` |
 | `utils` | 新增 `is.ts`、`mask.ts`；改造 `generate-routes-backend.ts`（后端动态菜单） |
-| `types` | 新增 `axios.d.ts`、`vue-office.d.ts`；定制 `user.ts` |
+| `types` | 定制 `global.d.ts`（axios 模块扩展内联其中）、`user.ts`；vue-office 类型在各应用 `src/vue-office-shim.d.ts` |
 | `icons` | 新增 iconify 离线图标包及 gitee、message、qq 等 svg 图标 |
-| `locales` | 四组语言文件大量定制，删除官方繁体中文（zh-TW） |
+| `locales` | 仅保留 zh-CN、en-US 两组语言文件并大量定制，删除官方其余语言 |
 | `@core/ui-kit/shadcn-ui` | 新增行为验证码、input-captcha、list、title、spinner（`createLoading`） |
 | `@core/composables` | 新增 `use-device.ts` |
 

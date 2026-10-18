@@ -20,6 +20,8 @@ import MarkdownEditor from '@vben/components/markdown-editor';
 | `v-model:modelValue` | `string` | - | Markdown 文本 |
 | `placeholder` | `string` | `'请输入内容，支持Markdown语法'` | 占位提示 |
 | `readonly` | `boolean` | `false` | 只读模式（渲染为 Viewer） |
+| `upload` | `boolean` | `false` | 开启后工具栏图片上传走公共上传接口 |
+| `bucket` | `string` | - | 图片上传的目标桶 |
 
 ## 2. 用法
 
