@@ -19,12 +19,12 @@ top.mddata.base.json
 ├── autoconfigure/
 │   ├── JacksonAutoConfiguration.java      # 自动配置：经 Jackson2ObjectMapperBuilderCustomizer 注入两个 Module
 │   └── GeneralPropertySourceFactory.java # @PropertySource 工厂：支持 json 配置文件
-├── enums/BigNumberSerializeMode.java     
+├── enums/BigNumberSerializeMode.java     # 注意：遗留枚举，当前无任何代码引用
 ├── module/
 │   ├── DateJacksonModule.java             # LocalDateTime 序列化/反序列化（时间戳/格式）
-│   └── NumberJacksonModule.java           # 挂 BigNumberSerializer
+│   └── NumberJacksonModule.java           # 挂 ToStringSerializer：Long/BigInteger/BigDecimal 无条件转字符串
 ├── serializer/
-│   ├── BigNumberSerializer.java          # 按 Mode 决定数值是否转字符串
+│   ├── BigNumberSerializer.java          # 注意：存在但未被装配（FLEXIBLE 语义已废弃）
 │   ├── LocalDateTimeDeserializer.java
 │   └── SimpleDeserializersWrapper.java
 └── util/{JSONUtils, JSONBuilder}.java     

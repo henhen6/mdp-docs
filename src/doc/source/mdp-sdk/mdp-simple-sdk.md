@@ -74,8 +74,8 @@ flowchart LR
 
 | API 类 | method() | 入参 → 返回 |
 |---|---|---|
-| `DemoFileUploadApi` | `demo.upload.more` | `DemoFileUploadRequest` → `UserResp` |
-| `DemoFileDownloadApi` | `demo.download` | `DemoFileDownloadRequest`(id) → `Object` |
+| `DemoFileUploadApi` | `demo.upload.more` | `DemoFileUploadRequest` → `DemoUploadResp` |
+| `DemoFileDownloadApi` | `demo.download` | `DemoFileDownloadRequest`(id) → `FileResult`（继承 `DownloadRequest`，下载返回类型固定） |
 
 ### 2.3 标准调用流程
 

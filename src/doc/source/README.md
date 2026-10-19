@@ -33,7 +33,7 @@ tag:
 flowchart BT
     parent["mdp-parent<br/>第三方版本基线"]
     base["mdp-base<br/>技术框架层（24 模块）"]
-    public["md-public<br/>业务公共层（5 模块）"]
+    public["md-public<br/>业务公共层（6 模块）"]
     apps["mdp-apps 各业务服务<br/>console / workbench / open / gateway ..."]
     sdk["mdp-sdk<br/>第三方 SDK（独立 jar，不依赖以上任何模块）"]
     third["第三方应用"]
@@ -46,7 +46,7 @@ flowchart BT
 ```
 
 ::: warning mdp-sdk 的独立性
-mdp-sdk 严禁依赖 mdp-base / md-public 的任何模块，它有自己的一套 `Result`/`Page` 模型和硬编码的轻量依赖（okhttp + fastjson2）。阅读时不要把 SDK 的 `top.mddata.sdk.core.common.Result` 和服务端的 `top.mddata.base.model.R` 混为一谈。
+mdp-sdk 严禁依赖 mdp-base / md-public 的任何模块，它有自己的一套 `Result`/`Page` 模型和硬编码的轻量依赖（okhttp + fastjson2）。阅读时不要把 SDK 的 `top.mddata.sdk.core.common.Result` 和服务端的 `top.mddata.base.base.R` 混为一谈。
 :::
 
 ## 3. 三个必须知道的全局约定

@@ -40,7 +40,7 @@ public class AccessTokenCkBuilder implements CacheKeyBuilder {
 }
 ```
 
-`AccessTokenCkBuilder`（`AccessTokenCkBuilder.java:33-35`）的复合 key 是 `{appKey}:{token}`——**同一 token 不同应用不互通**，防止跨应用冒用；过期约 2 小时（与开放平台 accessToken 有效期一致）。
+`AccessTokenCkBuilder`（`AccessTokenCkBuilder.java:35-37`）的复合 key 是 `{appKey}:{token}`——**同一 token 不同应用不互通**，防止跨应用冒用；过期约 2 小时（与开放平台 accessToken 有效期一致）。
 
 ### 2.2 命名规范（CacheKeyBuilder javadoc 约定）
 

@@ -10,7 +10,7 @@ tag:
 
 ## 1. 模块定位
 
-**Sa-Token v1.45.0 官方源码的定制副本**（坐标 `top.mddata.base:*`，模块内含 7 个子模块）。官方 sa-token 无法满足"一个后端服务多个 SSO 前端客户端"的需求，因此以源码 fork 方式改造。承担 MDP 的全部认证职责：SSO 服务端（认证中心）、SSO 客户端、OAuth2 客户端。
+**Sa-Token 官方源码的定制副本**（坐标 `top.mddata.base:*`，模块内含 8 个子模块）。官方 sa-token 无法满足"一个后端服务多个 SSO 前端客户端"的需求，因此以源码 fork 方式改造。承担 MDP 的全部认证职责：SSO 服务端（认证中心）、SSO 客户端、OAuth2 客户端。
 
 > ⚠️ **本模块是sa-token官方源码的升级版**：升级 sa-token 版本需手动 diff 合并，且定制过的方法签名与官方不一致，不能直接覆盖。模块根目录 `README.md` 有完整的升级注意事项，升级前必读。
 
@@ -59,6 +59,7 @@ tag:
 - **sa-token-sso-server-starter** —— 服务端自动装配：绑定 `sa-token.sso-server` 配置
 - **sa-token-sso-client** —— SSO 客户端专用代码，所有方法加 `clientId` 参数
 - **sa-token-sso-client-starter** —— 客户端自动装配
+- **sa-token-oauth2-core** —— OAuth2 标准协议出入参实体（RFC 6749 / RFC 7009 / OIDC）
 - **sa-token-oauth2-client** —— OAuth2 客户端核心代码（仅依赖 sa-token-core）
 - **sa-token-oauth2-client-starter** —— OAuth2 客户端自动装配
 

@@ -51,12 +51,9 @@ flowchart BT
 | `mdp.database.id-type` | HU_TOOL | 主键策略：HU_TOOL / DEFAULT / CACHE |
 | `mdp.database.is-not-write` | false | 全局禁止写入（配合 write-white-list 白名单放行） |
 | `mdp.database.write-white-list` | — | 禁止写入白名单（URL 列表） |
-| `mdp.database.is-data-scope` | true | 是否启用数据权限（注意：真正装配在 flex.data-scope） |
-| `mdp.database.ignore-table` | [] | 租户插件不拼接租户 ID 的表名 |
-| `mdp.database.ignore-table-prefix` | [] | 同上，按前缀 |
 | `mdp.database.flex.audit` | false | 启用 SQL 审计 |
 | `mdp.database.flex.audit-collector` | DEFAULTS | 审计收集器：DEFAULTS / CONSOLE / COUNTABLE / SCHEDULED |
-| `mdp.database.flex.data-scope` | false | **数据权限装配开关**（matchIfMissing=false，决定 DataPermissionAutoConfiguration 是否生效） |
+| `mdp.database.flex.data-scope` | false | **数据权限装配开关**（matchIfMissing=false，决定 `DataScopeAutoConfiguration` 是否生效，见 [md-db-mybatis-flex](md-db-mybatis-flex.md)） |
 | `mdp.database.flex.logic-delete-processor` | TIME_STAMP_DEL_BY_LOGIC_DELETE_PROCESSOR | 逻辑删除处理器（另 5 种见下） |
 | `mdp.database.flex.deleted-by-column` | deleted_by | 逻辑删除人字段名 |
 | `mdp.database.hutool-id.worker-id` | 0 | 终端 ID（0-31） |

@@ -15,7 +15,7 @@ tag:
 SDK 的运行时内核：HTTP 客户端、RSA 签名/验签、AES 消息加解密、统一返回体与分页模型、请求基类。所有第三方 API 封装（mdp-simple-sdk）都构建在本模块之上。
 
 - Maven 坐标：`top.mddata.sdk:mdp-sdk-core`
-- 依赖：okhttp 4.12（网络）、fastjson2（JSON）、commons-logging（日志）、commons-io，版本在自身 pom 中独立管理，**不继承平台 parent**
+- 依赖：okhttp 4.12（网络）、fastjson2（JSON）、slf4j-api（日志门面），版本在自身 pom 中独立管理，**不继承平台 parent**
 - 包根：`top.mddata.sdk.core`
 
 ## 2. 源码解读
@@ -106,7 +106,7 @@ top.mddata.sdk.core
 
 - 请求签名：`getSignContent(params)`（参数按 key 排序拼接，剔除 sign 与空值）→ `rsaSign(content, privateKey, charset, signType)`；RSA2 用 SHA256WithRSA、RSA 用 SHA1WithRSA
 - 响应验签：`rsaCheckV1/V2(params, publicKey, charset, signType)`
-- `sign/RsaTool.java`：密钥工具——生成密钥对、PKCS1↔PKCS8 格式互转（内部枚举 `KeyFormat`/`KeyLength`/`KeyStore`），可独立复用
+- `sign/RsaTool.java`：密钥工具——生成密钥对、PKCS1↔PKCS8 格式互转（内部枚举 `KeyFormat`/`KeyLength`，`KeyStore` 为内部静态类），可独立复用
 
 **AES 回调消息加解密**（`aes/MdpBizMsgCrypt.java`），用于第三方接收平台的事件回调/接口回调：
 
@@ -147,7 +147,7 @@ top.mddata.sdk.core
 ## 5. 功能扩展建议
 
 - **想改 HTTP 底层**（代理、连接池、重试）：改 `client/OpenHttp.java`（okhttp 封装，含 cookie store 与文件上传下载），或在 `OpenRequest` 层拦截
-- **想统一记录请求日志**：开启 commons-logging 的 debug 级别，`OpenClient` 会打印请求参数、待签名内容与响应原文（`OpenClient.java:144-155`）
+- **想统一记录请求日志**：`OpenClient` 使用 slf4j 门面，把你应用的 slf4j 实现（如 logback）对应 logger 调到 debug 级别，即可打印请求参数与待签名内容（`OpenClient.java:144-155`）及响应原文（`OpenClient.java:166-168`）
 - **对接多环境**：`OpenConfig` 实例可复用，按环境 new 多个 `OpenClient` 即可；不要把 url/appKey 硬编码进 API 类
 
 ## 6. 二次开发注意事项

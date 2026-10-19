@@ -21,6 +21,9 @@ top.mddata.base.boot
 │   ├── DefaultAsyncTaskConfig.java  # @EnableAsync 异步线程池（读 AsyncProperties）
 │   ├── ParamNameConfig.java         # @LoginUser 参数解析装配入口
 │   └── properties/AsyncProperties.java  # mdp.async.* 配置类
+├── inner
+│   ├── InnerEndpointAutoConfiguration.java  # 内部接口鉴权自动配置（imports 注册）
+│   └── InnerAuthInterceptor.java     # /inner/** 接口的 token 校验拦截器（mdp.inner.token）
 └── handler
     ├── AbstractGlobalExceptionHandler.java  # 抽象全局异常处理器（20+ @ExceptionHandler）
     ├── ParamAttrProcessor.java       # 参数属性解析
@@ -34,7 +37,7 @@ top.mddata.base.boot
 
 ### 2.2 @LoginUser 参数解析链
 
-`ParamNameConfig` → `ParamArgumentProcessor`（实现 `HandlerMethodArgumentResolver`）→ 识别 Controller 方法参数上的 `@LoginUser`（注解定义在 md-annotation）→ 从 `ContextUtil`/sa-token 会话取当前用户信息注入参数，支持 `isRoles/isOrg/isStation/isFull/isResource` 控制注入内容。
+`ParamNameConfig` → `ParamArgumentProcessor`（实现 `HandlerMethodArgumentResolver`）→ 识别 Controller 方法参数上的 `@LoginUser`（注解定义在 md-annotation）→ 从 `ContextUtil`/sa-token 会话取当前用户信息注入参数，支持 `isRoles/isOrg/isPosition/isFull/isResource` 控制注入内容（注意：注解 javadoc 示例中的 `isStation` 是过时写法，实际属性名为 `isPosition`）。
 
 ### 2.3 AbstractGlobalExceptionHandler（抽象，需继承）
 
@@ -77,8 +80,9 @@ top.mddata.base.boot
 
 ## 6. 二次开发注意事项
 
-::: warning imports 为空是有意设计
-本模块**没有** `AutoConfiguration.imports` 注册——`BaseConfig` 和 `AbstractGlobalExceptionHandler` 刻意做成抽象类，要求应用层继承后才生效（避免强制装配覆盖应用自己的配置）。如果你新起的服务发现"日期参数解析不生效/异常响应不是 R"，先检查是否继承了这两个基类。MDP 各业务服务统一在 md-common-config 中继承，**业务服务不要再继承一遍**，否则双份 Bean 冲突。
+::: warning 抽象基类需继承才有效果
+`BaseConfig` 和 `AbstractGlobalExceptionHandler` 刻意做成抽象类，要求应用层继承后才生效（避免强制装配覆盖应用自己的配置）。如果你新起的服务发现"日期参数解析不生效/异常响应不是 R"，先检查是否继承了这两个基类。MDP 各业务服务统一在 md-common-config 中继承，**业务服务不要再继承一遍**，否则双份 Bean 冲突。
+
 :::
 
 ::: warning 微服务形态别用错

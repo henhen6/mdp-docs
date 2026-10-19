@@ -19,13 +19,13 @@ tag:
 | `suppressions.xml` | checkstyle 规则豁免清单 |
 
 - Maven 坐标：`top.mddata.base:mdp-parent:${revision}`
-- 继承关系：`org.springframework.boot:spring-boot-starter-parent:3.5.14`
+- 继承关系：`org.springframework.boot:spring-boot-starter-parent:3.5.16`
 - 运行环境：**JDK 17**、UTF-8
 - 下游：`mdp-base`（及其全部子模块）、`mdp-apps` 等工程均继承本 POM
 
 ```mermaid
 flowchart BT
-    P["mdp-parent<br/>第三方版本仲裁 + checkstyle + flatten"]   -->  SB["spring-boot-starter-parent 3.5.14"]
+    P["mdp-parent<br/>第三方版本仲裁 + checkstyle + flatten"]   -->  SB["spring-boot-starter-parent 3.5.16"]
     BASE["mdp-base（基础框架 24 模块）"] --> P
     APPS["mdp-apps（业务服务）"] --> P
 ```
@@ -36,31 +36,31 @@ flowchart BT
 
 `pom.xml` 按固定顺序 import 了多个官方 BOM：
 
-1. `spring-cloud-dependencies`（2025.0.2）
+1. `spring-cloud-dependencies`（2025.0.3）
 2. `spring-cloud-alibaba-dependencies`（2025.0.0.0）
-3. `spring-framework-bom`（6.2.12）
-4. `springdoc-openapi`（2.8.5）
-5. `mybatis-flex-dependencies`（1.11.7）、`sa-token-bom`（1.45.0）、`knife4j-dependencies`（4.5.0）、`dubbo-bom`（3.3.6）
+3. `spring-framework-bom`（6.2.19）
+4. `springdoc-openapi`（2.8.17）、`nextdoc4j-bom`（1.4.1，接口文档 UI，已替代 knife4j）
+5. `mybatis-flex-dependencies`（1.11.8）、`sa-token-bom`（1.46.0）、`dubbo-bom`（3.3.6）
 
 ::: danger BOM 顺序不能乱
-**「以上几个配置的顺序不能错，否则会导致 spring、springdoc 的版本不正确」**。Maven BOM 仲裁遵循「先声明者胜出」，调整顺序会静默改变传递依赖版本，引发难以排查的 NoSuchMethodError。
+**「以上几个配置的顺序不能错，否则会导致 spring、springdoc、nextdoc4j 的版本不正确」**。Maven BOM 仲裁遵循「先声明者胜出」，调整顺序会静默改变传递依赖版本，引发难以排查的 NoSuchMethodError。
 :::
 
 ### 2.2 版本清单（按类别）
 
 | 类别 | 依赖 | 版本 |
 | --- | --- | --- |
-| 微服务 | spring-cloud / alibaba / dubbo / nacos-client / seata / sentinel | 2025.0.2 / 2025.0.0.0 / 3.3.6 / 3.2.1 / 2.0.0 / 1.8.6 |
-| 监控 | spring-boot-admin | 3.5.9 |
-| 持久层 | mybatis-flex / mybatis / druid / mysql / mssql-jdbc / 达梦 DmJdbcDriver18 | 1.11.7 / 3.5.19 / 1.2.27 / 8.0.33 / 8.0.33 / 8.1.3.140 |
-| 认证安全 | sa-token / JustAuth / antisamy / aj-captcha / easy-captcha | 1.45.0 / 1.16.5 / 1.7.8 / 1.4.0 / 1.6.2 |
-| 接口文档 | knife4j / springdoc / smart-doc / torna-sdk | 4.5.0 / 2.8.5 / 3.1.2 / 1.0.16 |
+| 微服务 | spring-cloud / alibaba / dubbo / nacos-client / seata / sentinel | 2025.0.3 / 2025.0.0.0 / 3.3.6 / 3.2.4 / 2.0.0 / 1.8.6 |
+| 监控 | spring-boot-admin | 3.5.11 |
+| 持久层 | mybatis-flex / mybatis / druid / mysql / mssql-jdbc / 达梦 DmJdbcDriver18 | 1.11.8 / 3.5.19 / 1.2.28 / 8.0.33 / 8.0.33 / 8.1.3.140 |
+| 认证安全 | sa-token / JustAuth / antisamy / aj-captcha / easy-captcha | 1.46.0 / 1.16.7 / 1.7.8 / 1.4.0 / 1.6.2 |
+| 接口文档 | nextdoc4j（已替代 knife4j）/ springdoc / smart-doc / torna-sdk | 1.4.1 / 2.8.17 / 3.1.2 / 1.0.16 |
 | 消息/存储 | sms4j / x-file-storage / aliyun-oss / 华为 obs / 百度 bce / 七牛 / minio | 3.3.5 / 2.3.0 / 3.18.4 / 3.25.10 / 0.10.405 / 7.19.0 / 8.6.0 |
 | 定时任务 | powerjob（worker/client/official-processors） | 5.1.2 |
 | 对象转换 | mapstruct / mapstruct-plus | 1.6.3 / 1.4.2 |
-| 序列化 | fastjson2 / protostuff | 2.0.62 / 1.7.4 |
+| 序列化 | fastjson2 / protostuff | 2.0.65 / 1.8.0 |
 | Excel | fastexcel / poi | 1.3.0 / 5.3.0 |
-| 工具 | hutool / guava / lombok / commons-* / oshi / ip2region / jasypt / transmittable-thread-local / groovy / enjoy | 5.8.44 / 33.6.0-jre / 1.18.46 / … / 7.1.0 / 3.3.7 / 4.0.3 / 2.14.0 / 4.0.26 / 5.1.3 |
+| 工具 | hutool / guava / lombok / commons-* / oshi / ip2region / jasypt / transmittable-thread-local / groovy / enjoy | 5.8.47 / 33.7.1-jre / 1.18.48 / … / 7.1.0 / 3.3.7 / 4.0.3 / 2.14.0 / 4.0.26 / 5.1.3 |
 
 ::: tip sms4j 大量 exclude hutool
 `sms4j-*` 全系列排除了自带的 `hutool-core/log/json/http/crypto/cron/setting`，统一使用平台仲裁的 `hutool-all`，避免类冲突。自行引入 sms4j 相关依赖时请照抄 exclusion。
@@ -244,7 +244,7 @@ public class SmsSender { }
 
 | 参数 | 默认值 | 说明 |
 | --- | --- | --- |
-| `${revision}` | `1.5.0-SNAPSHOT` | 全平台版本号，发版时统一修改 |
+| `${revision}` | `1.7.0-SNAPSHOT` | 全平台版本号，发版时统一修改 |
 | `${profile.active}` | `dev` | 通过 `-Ptest` / `-Pprod` 切换 |
 | `-Dcheckstyle.skip=true` | 不跳过 | 本地快速构建时跳过规范检查 |
 

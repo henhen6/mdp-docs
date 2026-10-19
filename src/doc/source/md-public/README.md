@@ -72,6 +72,8 @@ flowchart BT
     rapi --> core
     rapi --> pojo
     rapi --> ck
+    rapi --> cachestarter
+    rapi --> dbflex
 ```
 
 核心基类均来自 mdp-base，二开前建议先读：

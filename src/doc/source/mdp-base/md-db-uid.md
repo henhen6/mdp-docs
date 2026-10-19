@@ -56,7 +56,7 @@ MyBatis 注解 DAO（不走 mybatis-flex），对 `worker_node` 表 insert/selec
 
 - **`WorkerIdAssigner`**：想复用（而非用后即弃）workerId，实现该接口替换 `DisposableWorkerIdAssigner`。
 - **`RejectedPutBufferHandler` / `RejectedTakeBufferHandler`**：CACHE 策略环满/环空时的拒绝策略，配置实现类即可注入（支持 Lambda 风格实现类）。
-- 位数参数本身就是容量调优点：长期运行/频繁重启场景参考 `DatabaseProperties.java:91-95` javadoc 的三组推荐组合。
+- 位数参数本身就是容量调优点：长期运行/频繁重启场景参考 `DatabaseProperties.java:80-82` javadoc 的三组推荐组合。
 
 ## 5. 功能扩展建议
 

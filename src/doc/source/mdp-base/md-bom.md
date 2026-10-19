@@ -25,7 +25,7 @@ tag:
 
 ### 2.1 md-bom 管理的构件清单
 
-`md-bom/pom.xml` 的 `dependencyManagement` 声明了 24 个内部构件，按用途分组：
+`md-bom/pom.xml` 的 `dependencyManagement` 声明了 25 个内部构件，按用途分组：
 
 ```mermaid
 flowchart LR
@@ -34,6 +34,7 @@ flowchart LR
     BOM --> DB["数据库<br/>md-db / md-db-uid<br/>md-db-mybatis-flex / md-mvc-flex"]
     BOM --> STARTER["Starter<br/>md-cache / md-echo / md-log<br/>md-json / md-openapi3 / md-scan<br/>md-validator / md-xss / md-cloud"]
     BOM --> CAPTCHA["验证码<br/>md-graphic-captcha-starter<br/>md-slider-captcha-starter"]
+    BOM --> SOP["开放平台<br/>sop-service-support<br/>sop-spring-boot-starter"]
     BOM --> OTHER["其他<br/>md-codegen<br/>md-powerjob-worker-spring-boot-starter"]
 ```
 

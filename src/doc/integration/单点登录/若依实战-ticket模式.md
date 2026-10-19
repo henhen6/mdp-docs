@@ -169,26 +169,34 @@ tag:
 
 3. 开发新接口
 
-   - ruoyi-admin/pom.xml 添加依赖
+   - 添加依赖（SSO 客户端依赖放在 ruoyi-framework，admin 只补两个官方插件）
+
+     ruoyi-framework/pom.xml：
 
      ```xml
-      <!-- Sa-Token 插件：整合SSO -->
-       <dependency>
-           <groupId>cn.dev33</groupId>
-           <artifactId>sa-token-sso</artifactId>
-           <version>1.45.0</version>
-       </dependency>
-       <!-- Sa-Token 插件：整合 Forest 请求工具 -->
-       <dependency>
-           <groupId>cn.dev33</groupId>
-           <artifactId>sa-token-forest</artifactId>
-           <version>1.45.0</version>
-       </dependency>
-       <dependency>
-           <groupId>cn.dev33</groupId>
-           <artifactId>sa-token-spring-boot4-starter</artifactId>
-           <version>1.45.0</version>
-       </dependency>
+      <!-- MDP 定制版 SSO 客户端：替换官方 sa-token-sso（需先本地编译 mdp 项目） -->
+      <dependency>
+          <groupId>top.mddata.base</groupId>
+          <artifactId>sa-token-sso-client-starter</artifactId>
+          <version>${mdp-sa-token.version}</version>   <!-- 根 pom 定义，当前 1.6.0-SNAPSHOT -->
+      </dependency>
+     ```
+
+     ruoyi-admin/pom.xml（`sa-token.version` 当前为 1.46.0）：
+
+     ```xml
+      <!-- SSO 客户端依赖（top.mddata.base:sa-token-sso-client-starter）由 ruoyi-framework 传递引入 -->
+      <!-- Sa-Token 插件：整合 Forest 请求工具（SSO 消息推送的底层 HTTP 实现，必要） -->
+      <dependency>
+          <groupId>cn.dev33</groupId>
+          <artifactId>sa-token-forest</artifactId>
+          <version>${sa-token.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>cn.dev33</groupId>
+          <artifactId>sa-token-spring-boot4-starter</artifactId>
+          <version>${sa-token.version}</version>
+      </dependency>
      ```
 
    - 开发Controller接口（getSsoAuthUrl、doLoginByTicket）
@@ -230,7 +238,8 @@ tag:
          @Operation(summary = "获取SSO认证中心登录地址", description = "获取SSO认证中心登录地址")
          @GetMapping("/anyUser/client/getSsoAuthUrl")
          public AjaxResult getSsoAuthUrl(String clientLoginUrl) {
-             String serverAuthUrl = SaSsoClientUtil.buildServerAuthUrl(clientLoginUrl, "");
+             // MDP 定制版为 3 参数（clientId, clientLoginUrl, back），单客户端 clientId 传 null
+             String serverAuthUrl = SaSsoClientUtil.buildServerAuthUrl(null, clientLoginUrl, "");
              return AjaxResult.success("操作成功", serverAuthUrl);
          }
      
@@ -248,10 +257,11 @@ tag:
          @GetMapping("/anyUser/client/doLoginByTicket")
          public AjaxResult doLoginByTicket(String ticket) {
              // 校验ticket （若校验失败，这个方法会直接报错）
-             SaCheckTicketResult ctr = SaSsoClientProcessor.instance.checkTicket(ticket);
+             // fork 版 instance 为 private，用 getInstance()；定制版 checkTicket 需传 clientId
+             SaCheckTicketResult ctr = SaSsoClientProcessor.getInstance().checkTicket(null, ticket);
      
              // 校验成功：则根据sso的用户id，查询 若依的用户， 然后生成若依系统的token。
-             String token = sysLoginService.login(Convert.toLong(ctr.loginId));
+             String token = sysLoginService.login(Convert.toLong(ctr.getLoginId()));
              return AjaxResult.success("操作成功", token);
          }
      }
@@ -657,15 +667,15 @@ Sa-token支持4种注销方式，本项目采用的是全端注销。
        }
    
        public Object _ssoLogoutByMode3(Long loginId) {
-           // 获取对象
+           // 获取对象（clientId 传 null：使用默认的 sa-token.sso-client 配置，本项目只有一个客户端身份）
            SaRequest req = SaHolder.getRequest();
            SaResponse res = SaHolder.getResponse();
-           StpLogic stpLogic = SaSsoClientProcessor.instance.ssoClientTemplate.getStpLogicOrGlobal();
-           boolean singleDeviceIdLogout = req.isParam(SaSsoClientProcessor.instance.ssoClientTemplate.paramName.singleDeviceIdLogout, "true");
+           StpLogic stpLogic = SaSsoClientProcessor.getInstance().getSsoClientTemplate().getStpLogicOrGlobal();
+           boolean singleDeviceIdLogout = req.isParam(SaSsoClientProcessor.getInstance().getSsoClientTemplate().getParamName().getSingleDeviceIdLogout(), "true");
    
            // 如果未登录，则无需注销
            if (loginId == null) {
-               return SaSsoClientProcessor.instance._ssoLogoutBack(req, res);
+               return SaSsoClientProcessor.getInstance()._ssoLogoutBack(req, res);
            }
    
            // 向 sso-server 认证中心推送消息：单点注销
@@ -674,9 +684,9 @@ Sa-token支持4种注销方式，本项目采用的是全端注销。
                logoutParameter.setDeviceId(stpLogic.getLoginDeviceId());
            }
    
-           Object centerId = SaSsoClientProcessor.instance.ssoClientTemplate.strategy.convertLoginIdToCenterId.run(loginId);
-           SaSsoMessage message = SaSsoClientProcessor.instance.ssoClientTemplate.buildSignoutMessage(centerId, logoutParameter);
-           SaResult result = SaSsoClientProcessor.instance.ssoClientTemplate.pushMessageAsSaResult(message);
+           Object centerId = SaSsoClientProcessor.getInstance().getSsoClientTemplate().getStrategy().getConvertLoginIdToCenterId().run(loginId);
+           SaSsoMessage message = SaSsoClientProcessor.getInstance().getSsoClientTemplate().buildSignoutMessage(centerId, logoutParameter);
+           SaResult result = SaSsoClientProcessor.getInstance().getSsoClientTemplate().pushMessageAsSaResult(null, message);
    
            // 如果 sso-server 响应的状态码非200，代表业务失败，将回应的 msg 字段作为异常抛出
            if (result.getCode() == null || SaResult.CODE_SUCCESS != result.getCode()) {
@@ -687,7 +697,7 @@ Sa-token支持4种注销方式，本项目采用的是全端注销。
            if (stpLogic.isLogin()) {
                stpLogic.logout(loginId, logoutParameter);
            }
-           return SaSsoClientProcessor.instance._ssoLogoutBack(req, res);
+           return SaSsoClientProcessor.getInstance()._ssoLogoutBack(req, res);
        }
    }
    ```

@@ -77,7 +77,7 @@ public class User extends UserBase {
 | `IdsDto` | `@NotEmpty` 的 id 集合入参 |
 | `StatusUpdateDto` extends `IdDto` | 单条状态变更 |
 | `StatusUpdateBatchDto` extends `IdsDto` | 批量状态变更 |
-| `AudioDto` | 语音相关入参 |
+| `AudioDto` | 审核入参（id/auditStatus/reviewComments） |
 
 ### 2.3 通用 VO（vo/）
 

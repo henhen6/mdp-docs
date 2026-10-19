@@ -104,7 +104,8 @@ GET /anyUser/client/getSsoAuthUrl?clientLoginUrl={当前页面地址}
 @GetMapping("/anyUser/client/getSsoAuthUrl")
 public AjaxResult getSsoAuthUrl(String clientLoginUrl) {
     // 拼接：认证中心登录页 + client + redirect=clientLoginUrl
-    String serverAuthUrl = SaSsoClientUtil.buildServerAuthUrl(clientLoginUrl, "");
+    // 注意：MDP 定制版为 3 参数（clientId, clientLoginUrl, back），单客户端系统 clientId 传 null
+    String serverAuthUrl = SaSsoClientUtil.buildServerAuthUrl(null, clientLoginUrl, "");
     return AjaxResult.success("操作成功", serverAuthUrl);
 }
 ```
@@ -122,10 +123,11 @@ GET /anyUser/client/doLoginByTicket?ticket={ticket}
 public AjaxResult doLoginByTicket(String ticket) {
     // 校验 ticket（内部会通过 http 请求调用 MDP 服务端的 pushS 接口完成校验）
     // 校验失败会直接抛异常（错误码 30004：ticket 无效；30005：校验失败）
-    SaCheckTicketResult ctr = SaSsoClientProcessor.instance.checkTicket(ticket);
+    // 注意：fork 版 instance 为 private，公开 API 是 getInstance()；定制版 checkTicket 需传 clientId（单客户端传 null）
+    SaCheckTicketResult ctr = SaSsoClientProcessor.getInstance().checkTicket(null, ticket);
 
     // 校验成功：ctr.loginId 即 MDP 的用户id，根据它查询/创建本系统用户，生成本系统会话
-    String token = sysLoginService.login(Convert.toLong(ctr.loginId()));
+    String token = sysLoginService.login(Convert.toLong(ctr.getLoginId()));
     return AjaxResult.success("操作成功", token);
 }
 ```
@@ -135,8 +137,10 @@ public AjaxResult doLoginByTicket(String ticket) {
 | 字段 | 说明 |
 | ---- | ---- |
 | `loginId` | MDP 用户 id（即您换取到的用户标识） |
+| `tokenValue` | MDP 侧的 token 值 |
 | `remainTokenTimeout` | MDP 会话剩余有效时间（秒），可用于同步设置您本系统会话时长 |
-| `clientId` | 客户端标识（即 appKey） |
+| `remainSessionTimeout` | MDP 会话剩余有效期（秒） |
+| `centerId` | 认证中心用户 id |
 
 #### 接口三：接收服务端推送（单点注销必需）
 
@@ -151,7 +155,8 @@ MDP 服务端执行"全端退出"时，会向所有开启了 `ssoPush` 的应用
 public Object push() {
     try {
         // 消息类型：logoutCall（单点注销回调），框架内部自动处理
-        return SaSsoClientProcessor.instance.ssoPushC();
+        // 定制版 ssoPushC 需传 clientId（单客户端传 null）
+        return SaSsoClientProcessor.getInstance().ssoPushC(null);
     } catch (Exception e) {
         return SaResult.error(e.getMessage());
     }
@@ -276,7 +281,7 @@ https://your-domain/your-login-path?ticket=xxx
 @RequestMapping("/sso/logoutByAlone")
 public Object logoutByAlone() {
     StpUtil.logout();
-    return SaSsoClientProcessor.instance._ssoLogoutBack(SaHolder.getRequest(), SaHolder.getResponse());
+    return SaSsoClientProcessor.getInstance()._ssoLogoutBack(SaHolder.getRequest(), SaHolder.getResponse());
 }
 ```
 

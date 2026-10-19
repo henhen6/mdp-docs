@@ -41,7 +41,7 @@ flowchart LR
     B --> C["EchoServiceImpl.echo(obj)"]
     C --> D["反射解析 @Echo 字段<br/>按 api 分组"]
     D --> E{"strategyMap.get(api)"}
-    E -->|beanName 命中| F["LoadService.load(keys) 批量查询"]
+    E -->|beanName 命中| F["LoadService.findByIds(ids) 批量查询"]
     E -->|dictType| G["字典翻译"]
     F --> H["回填到目标字段"]
     G --> H
@@ -88,9 +88,9 @@ flowchart LR
 @Service("projectNameApi")
 public class ProjectNameLoadService implements LoadService {
     @Override
-    public Map<Object, Object> findByKeys(Set<Object> keys) {
+    public Map<Serializable, Object> findByIds(Set<Serializable> ids) {
         // 一次批量查询，禁止循环单查
-        return projectService.listByIds(keys).stream()
+        return projectService.listByIds(ids).stream()
             .collect(toMap(Project::getId, Project::getName));
     }
 }
@@ -108,6 +108,6 @@ MDP 平台侧的 `LoadService` 实现集中在各业务服务的 `*ApiImpl`（�
 :::
 
 - `@Echo.api` 的值必须与 `LoadService` 实现类的 **beanName** 完全一致；找不到 bean 时该字段回显被静默跳过，不会抛异常，排查时优先检查命名。
-- `findByKeys` 是批量语义，实现时务必一次 in 查询，不要循环单查（否则回显 N 条记录产生 N 次 SQL）。
+- `findByIds` 是批量语义，实现时务必一次 in 查询，不要循环单查（否则回显 N 条记录产生 N 次 SQL）。
 - `@EchoResult` 基于 AOP，同类内部方法自调用不生效；返回值嵌套层级超过 `max-depth` 的部分不回显。
 - 预扫描 `base-packages` 配置过大（如根包）会拖慢启动，建议只配 VO/DTO 所在包。
