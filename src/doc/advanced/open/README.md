@@ -27,32 +27,19 @@ tag:
 
 MDP 开放平台不是单个服务，在微服务架构和单体架构中架构方式有所区别：
 
-```mermaid
-flowchart TB
-    subgraph 第三方["第三方"]
-        SDK["mdp-sdk<br/>（Java SDK）"]
-        CB["回调接收端"]
-    end
-    subgraph 平台["MDP 平台"]
-        GW["sop-gateway-server :23456<br/>开放平台网关<br/>验签/鉴权/路由/调用日志"]
-        API["api-server :23454<br/>（单体版：worker-server）<br/>@Open 接口实现"]
-        OPEN["open-server :23452<br/>（单体版：boot-server）"]
-        TORNA["Torna<br/>（独立部署的文档系统）"]
-    end
-    subgraph 用户["用户"]
-      DEV["开发者<br/>（在 开发者中心 查看文档、接口）"]
-      OPS["运营<br/>（在 控制台 管理文档、接口）"]
-    end
-    
-    DEV --> OPEN
-    OPS --> OPEN
-    SDK -->|"HTTP + RSA2 签名"| GW
-    GW -->|"Dubbo 泛化调用"| API
-    API -->|"启动时自动注册接口"| GW
-    API -. "smart-doc 推送文档" .-> TORNA
-    TORNA -. "手动同步拉回" .-> OPEN
-    OPEN -. "事件推送/接口回调<br/>（AES 加密 + 重试）" .-> CB
-```
+::: tabs
+
+@tab 单体架构
+
+![](/img/doc/开发者平台/MDP-开放平台-单体版.png)
+
+@tab 微服务架构
+
+![](/img/doc/开发者平台/MDP-开放平台-微服务版.png)
+
+::: 
+
+
 
 | 组成 | 模块 | 职责 |
 | ---- | ---- | ---- |
