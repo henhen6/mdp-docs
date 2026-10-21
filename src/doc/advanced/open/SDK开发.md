@@ -13,7 +13,7 @@ tag:
 
 ## 1. 交付纪律
 
-mdp-sdk 是**直接交付给第三方的 jar**（mdp-sdk README 明确定位），约束：
+mdp-sdk 是**直接交付给第三方的 jar**，约束：
 
 ::: warning 依赖纪律
 
@@ -23,24 +23,24 @@ mdp-sdk 是**直接交付给第三方的 jar**（mdp-sdk README 明确定位）�
 
 :::
 
-## 2. 新增业务域 SDK：四步走
+## 2. 新增业务域 SDK
 
 以已有 `demo` 域为模板（`mdp-simple-sdk/src/main/java/top/mddata/sdk/simple/`）：
 
-**第 1 步：request 包**——入参 DTO
+**第 1 步：** 在 request 包新建入参 DTO
 
 ```java
 // request/goods/GoodsSaveDto.java —— 普通 POJO，Serializable
 // 字段名即 bizContent JSON 的字段名，与服务端 api-pojo 的接收对象一致
 ```
 
-**第 2 步：response 包**——返回 DTO
+**第 2 步：** 在response 包新建返回 DTO
 
 ```java
 // response/goods/GoodsResp.java
 ```
 
-**第 3 步：api 包**——接口封装类
+**第 3 步：** 在api 包新建接口封装类
 
 ```java
 public class GoodsSaveApi extends BaseParam<GoodsSaveDto, GoodsResp> {
