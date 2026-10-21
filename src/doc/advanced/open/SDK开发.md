@@ -100,6 +100,8 @@ String privateKey = keys.getPrivateKey();  // 开发者自行保存，用于请�
 
 **公钥如何配置进平台**（两种视角）：
 
+![](/img/doc/开发者平台/开发者中心-应用秘钥.png)
+
 | 视角 | 操作路径 | 接口 |
 | ---- | ---- | ---- |
 | 开发者自行配置 | web-open「应用管理」→ 应用详情 → **应用秘钥** Tab：粘贴公钥到「开发者公钥」后保存；或点「替我生成公私钥」由平台生成（弹窗确认后旧密钥对立即失效，新公私钥只读展示一次） | 保存：`POST /client/app/updateKeys`；平台代生成：`POST /client/app/resetAppKeys` |
@@ -134,6 +136,8 @@ boolean ok = crypt.verifySignature(timestamp, nonce, "", signature);
 | `appKey` | 应用标识 | **不可自选**——应用创建时由平台分配（`yyyyMMdd` + 随机 10 位），在「应用秘钥」Tab 查看 |
 
 三个参数如何配置进平台（两种视角）：
+
+![](/img/doc/开发者平台/开发者中心-事件订阅.png)
 
 | 视角 | 操作路径 | 接口 |
 | ---- | ---- | ---- |
