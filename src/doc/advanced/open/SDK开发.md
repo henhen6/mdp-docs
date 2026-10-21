@@ -88,41 +88,112 @@ public class GoodsTest {
 
 ### 4.1 RSA 密钥对（请求签名用）
 
-开发者（或平台代为）生成密钥对的工具在 SDK 内核：
+请求签名的规则是：**开发者持私钥签名，平台持公钥验签**。密钥对用 SDK 内核的 `RsaTool`（`mdp-sdk-core: sign/RsaTool.java`）生成：
 
 ```java
-// mdp-sdk-core：sign/RsaTool.java
 RsaTool.KeyStore keys = new RsaTool(KeyFormat.PKCS8, KeyLength.LENGTH_2048).createKeys();
-String publicKey = keys.getPublicKey();   // 配到平台 mdo_app_keys.public_key_app
-String privateKey = keys.getPrivateKey(); // 开发者自持，用于请求签名
+String publicKey = keys.getPublicKey();    // 配置到平台（mdo_app_keys.public_key_app）
+String privateKey = keys.getPrivateKey();  // 开发者自行保存，用于请求签名
 ```
 
-支持 PKCS1/PKCS8 × 1024/2048（测试用例 `RsaToolTest.java:18-27`），`convertPkcs8ToPkcs1` 可互转格式。签名算法 RSA2 = SHA256WithRSA，待签内容为公共参数字典序拼接（`SignUtil`，与网关验签同一套约定）。
+支持 PKCS1/PKCS8 × 1024/2048（测试用例 `RsaToolTest.java:18-27`），`convertPkcs8ToPkcs1` 可互转格式；推荐 **PKCS8 + 2048**（与平台管理端「替我生成公私钥」的默认参数一致）。签名算法 RSA2 = SHA256WithRSA，待签内容为公共参数字典序拼接（`SignUtil`，与网关验签同一套约定）。
+
+**公钥如何配置进平台**（两种视角）：
+
+| 视角 | 操作路径 | 接口 |
+| ---- | ---- | ---- |
+| 开发者自行配置 | web-open「应用管理」→ 应用详情 → **应用秘钥** Tab：粘贴公钥到「开发者公钥」后保存；或点「替我生成公私钥」由平台生成（弹窗确认后旧密钥对立即失效，新公私钥只读展示一次） | 保存：`POST /client/app/updateKeys`；平台代生成：`POST /client/app/resetAppKeys` |
+| 运营代为配置 | console「开放平台 → 应用管理」→ 行操作「密钥」：查看/修改开发者公钥等密钥配置；也可在此代为重置密钥对 | 查看：`GET /admin/app/getKeys`；保存：`POST /admin/app/updateKeys` |
+
+无论哪条路径，平台侧最终只落库**公钥**（`AppKeysServiceImpl.resetAppKeys` :175-184 私钥不下库，仅返回一次）。
+
+**私钥如何保存**（给第三方的指导建议，平台方写接入文档时可直接引用）：
+
+- 私钥**绝不上传平台、不进 git 仓库、不出现在日志**——遗失无法找回，只能重新生成（旧密钥对随之作废）；
+- 推荐放配置中心或密钥管理服务（如 Nacos 加密配置、KMS），应用启动时注入 `OpenClient` 构造器；
+- 多人协作时按环境（开发/测试/生产）分别生成密钥对，避免共用一把私钥。
 
 ### 4.2 AES 推送加解密（接收回调/事件用）
 
-第三方接收平台推送时用 `MdpBizMsgCrypt`（SDK 内核 `aes/` 包）：
+第三方接收平台的事件推送/接口回调时，用 SDK 内核的 `MdpBizMsgCrypt`（`aes/` 包）验签解密：
 
 ```java
 MdpBizMsgCrypt crypt = new MdpBizMsgCrypt(token, encodingAesKey, appKey);
-// 安全模式：验签 + 解密
+// 安全/兼容模式：decryptMsg 内部完成 msgSignature 验签 + AES 解密
 String plaintext = crypt.decryptMsg(encrypt, timestamp, nonce, msgSignature);
-// 明文/兼容模式：单独验签 signature = SHA1(sort(token, timestamp, nonce, ""))
+// 明文模式：无密文可解，单独验签 signature = SHA1(sort(token, timestamp, nonce, ""))
+boolean ok = crypt.verifySignature(timestamp, nonce, "", signature);
 ```
 
-三种模式（`MODE_PLAINTEXT` 明文 / `MODE_COMPATIBLE` 兼容 / `MODE_ENCRYPTED` 安全）与平台 `NotifySender` 一一对应。**SDK 侧与服务端（sop-service-support）各有一份同算法实现，改动时必须两侧同步**。
+三个构造参数的来源与生成方式：
+
+| 参数 | 含义 | 如何生成 |
+| ---- | ---- | ---- |
+| `token` | 签名校验令牌 | 平台工具 `MdpBizMsgCrypt.generateToken()`（32 字符，:305-307）；web-open「事件订阅」Tab 有「随机生成」按钮 |
+| `encodingAesKey` | AES 消息加解密密钥 | `MdpBizMsgCrypt.generateEncodingAesKey()`（43 字符，:298-302）；「事件订阅」Tab 同样可一键生成 |
+| `appKey` | 应用标识 | **不可自选**——应用创建时由平台分配（`yyyyMMdd` + 随机 10 位），在「应用秘钥」Tab 查看 |
+
+三个参数如何配置进平台（两种视角）：
+
+| 视角 | 操作路径 | 接口 |
+| ---- | ---- | ---- |
+| 开发者自行配置 | web-open「应用管理」→ 应用详情 → **事件订阅** Tab：填通知地址、选加密模式、生成/粘贴 token 与 encodingAesKey、勾选订阅的事件类型，一并保存 | `POST /client/app/updateEventSubscription` |
+| 运营代为配置 | console「应用管理」→ 行操作「密钥」：修改通知地址、加密模式、Token、EncodingAESKey | `POST /admin/app/updateKeys` |
+
+配置落库在 `mdo_app_keys`（`notify_token`/`notify_encoding_aes_key` 等字段），**第三方接收端必须用与平台配置完全一致的 token/encodingAesKey**，建议存自己的配置文件而非每次查库（参考实现注释 `NotifyCallbackController.java:80`）。
+
+三种加密模式（`MODE_PLAINTEXT` 明文 / `MODE_COMPATIBLE` 兼容 / `MODE_ENCRYPTED` 安全）与平台 `NotifySender` 一一对应。**SDK 侧与服务端（sop-service-support）各有一份同算法实现，改动时必须两侧同步**。
 
 ## 5. 回调接收端参考实现
 
-平台在 md-api 内置了一个完整的接收端参考：`NotifyCallbackController`（`api-web/.../NotifyCallbackController.java:51`，路由 `POST /anyUser/notify/callback`）。指导第三方实现时，流程为：
+平台在 md-api 内置了一个完整的接收端参考：`NotifyCallbackController`（`api-web/.../NotifyCallbackController.java:51`，路由 `POST /anyUser/notify/callback`）。接收端收到推送后的主要步骤固定为 6 步：**取验签参数 → 取 appKey → 构建解密器 → 验签解密 → 按类型分发 → 应答**。以下为按该控制器提炼的伪代码（只保留必要节点，完整代码见源文件）：
 
-1. 取 URL 参数 `signature`/`msgSignature`/`timestamp`/`nonce`/`encryptType`（:57-65）；
-2. 从请求体取 `appKey`（三种模式都有），查对应加密配置（:74-78）——**建议第三方把 token/encodingAesKey 存自己配置文件，不要每次查库**（代码注释 :80）；
-3. 构造 `MdpBizMsgCrypt`，验签、解密（:92-183）；
-4. 按明文 JSON 的 `type` 分发：`EVENT_PUSH`（事件）/`CALLBACK`（接口回调），读 `bizContent` 处理业务（:195-234）；
-5. **应答**：成功返回 `{"code":0}`，平台以此判定投递成功；失败则进入重试梯度。
+```java
+@PostMapping("/notify/callback")
+public ApiResponse callback(HttpServletRequest request, @RequestBody String body) {
+    // ① 取 URL 上的验签参数（encryptType 仅加密模式存在）
+    String signature    = request.getParameter("signature");     // 所有模式都有
+    String msgSignature = request.getParameter("msgSignature");  // 仅加密模式
+    String timestamp    = request.getParameter("timestamp");
+    String nonce        = request.getParameter("nonce");
+    String encryptType  = request.getParameter("encryptType");
 
-第三方接入方视角的完整说明见[事件回调](../../integration/事件回调.md)、[接口回调](../../integration/接口回调.md)。
+    // ② 从请求体提取 appKey（三种模式的报文里都有该字段）
+    String appKey = JSON.parseObject(body).getString("appKey");
+
+    // ③ 构建解密器：token/encodingAesKey 取本应用配置（建议存本地配置，勿每次查库）
+    MdpBizMsgCrypt crypt = new MdpBizMsgCrypt(token, encodingAesKey, appKey);
+
+    // ④ 验签 + 解密，拿到明文 JSON
+    String plaintext;
+    if (encryptType 为空) {
+        // 明文模式：验 signature，body 即明文
+        if (!crypt.verifySignature(timestamp, nonce, "", signature)) {
+            return ApiResponse.error("验签失败");
+        }
+        plaintext = body;
+    } else {
+        // 兼容/安全模式：decryptMsg 内部完成 msgSignature 验签 + AES 解密
+        plaintext = crypt.decryptMsg(encrypt, timestamp, nonce, msgSignature);
+    }
+
+    // ⑤ 按 type 分发：EVENT_PUSH（事件推送）/ CALLBACK（接口回调）
+    //    EVENT_PUSH：按 method（事件码，冒号形式）分支，eventTriggerId 做幂等键
+    //    CALLBACK  ：按 method（接口名）分支，callLogId 做幂等键
+    //    bizContent 是 JSON 字符串，取出后需二次解析
+
+    // ⑥ 应答：处理成功返回 {"code": 0}
+    //    平台只认 code=0，其余一律判定失败并进入梯度重试
+    return ApiResponse.success("");
+}
+```
+
+两个容易踩坑的点：
+
+- **幂等**：同一任务重试期间会重复投递，业务处理必须以 `eventTriggerId`/`callLogId` 去重；
+- **先应答后处理**：平台推送 HTTP 超时默认 5 秒，业务复杂时先落库返回 `code=0`，再异步处理。
+
+第三方接入方视角的完整说明（报文字段、密钥派生、三种模式的实际请求体）见[事件回调](../../integration/事件回调.md)、[接口回调](../../integration/接口回调.md)。
 
 ## 6. OpenClient 使用规范
 
