@@ -115,7 +115,7 @@ grant_type=authorization_code&client_id={应用ID}&client_secret={应用秘钥}&
   "expires_in": 3600,
   "refresh_token": "xxx",
   "refresh_expires_in": 2592000,
-  "client_id": "2014072300007148",
+  "client_id": "ruoyi-vue-sso",
   "scope": "userinfo,openid",
   "openid": "xxx",
   "unionid": "xxx"
@@ -173,7 +173,7 @@ GET 或 POST {MDP后端地址}/oauth2/userinfo
   "name": "张三",
   "email": "zhangsan@example.com",
   "phone": "13800000000",
-  "sex": 1,
+  "sex": "1",
   "avatar": 1234567890
 }
 ```

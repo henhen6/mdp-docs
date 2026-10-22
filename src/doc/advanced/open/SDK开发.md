@@ -17,7 +17,7 @@ mdp-sdk 是**直接交付给第三方的 jar**，约束：
 
 ::: warning 依赖纪律
 
-- 依赖项尽可能少：当前仅 okhttp（网络）、fastjson2（JSON）、slf4j-api（日志门面），版本在自身 pom 独立管理，**不继承平台 parent**；
+- 依赖项尽可能少：当前仅 okhttp（网络）、fastjson2（JSON）、slf4j-api（日志门面），**第三方依赖版本在自身 pom 逐一锁定**（okhttp 4.12.0 / fastjson2 2.0.62 / slf4j-api 2.0.17），不走 mdp-parent BOM 仲裁——保证交付给第三方后依赖行为稳定（SDK 自身版本号仍跟随根 pom `${revision}`）；
 - **禁止**依赖平台内部模块（md-core、md-common-pojo 等）与 Spring——会把平台内部类泄露给第三方，并引入版本冲突；
 - 出入参 DTO 在 sdk 模块内重新定义（可对照 api-pojo 抄写），不要跨模块引用。
 
@@ -131,8 +131,8 @@ boolean ok = crypt.verifySignature(timestamp, nonce, "", signature);
 
 | 参数 | 含义 | 如何生成 |
 | ---- | ---- | ---- |
-| `token` | 签名校验令牌 | 平台工具 `MdpBizMsgCrypt.generateToken()`（32 字符，:305-307）；web-open「事件订阅」Tab 有「随机生成」按钮 |
-| `encodingAesKey` | AES 消息加解密密钥 | `MdpBizMsgCrypt.generateEncodingAesKey()`（43 字符，:298-302）；「事件订阅」Tab 同样可一键生成 |
+| `token` | 签名校验令牌 | 平台工具 `MdpBizMsgCrypt.generateToken()`（32 字符，`MdpBizMsgCrypt.java:283`）；web-open「事件订阅」Tab 有「随机生成」按钮 |
+| `encodingAesKey` | AES 消息加解密密钥 | `MdpBizMsgCrypt.generateEncodingAesKey()`（43 字符，:276）；「事件订阅」Tab 同样可一键生成 |
 | `appKey` | 应用标识 | **不可自选**——应用创建时由平台分配（`yyyyMMdd` + 随机 10 位），在「应用秘钥」Tab 查看 |
 
 三个参数如何配置进平台（两种视角）：
@@ -150,7 +150,7 @@ boolean ok = crypt.verifySignature(timestamp, nonce, "", signature);
 
 ## 5. 回调接收端参考实现
 
-平台在 md-api 内置了一个完整的接收端参考：`NotifyCallbackController`（`api-web/.../NotifyCallbackController.java:51`，路由 `POST /anyUser/notify/callback`）。接收端收到推送后的主要步骤固定为 6 步：**取验签参数 → 取 appKey → 构建解密器 → 验签解密 → 按类型分发 → 应答**。以下为按该控制器提炼的伪代码（只保留必要节点，完整代码见源文件）：
+平台在 md-api 内置了一个完整的接收端参考：`NotifyCallbackController`（`api-web/.../NotifyCallbackController.java:41`，路由 `POST /anyUser/notify/callback`，:52）。接收端收到推送后的主要步骤固定为 6 步：**取验签参数 → 取 appKey → 构建解密器 → 验签解密 → 按类型分发 → 应答**。以下为按该控制器提炼的伪代码（只保留必要节点，完整代码见源文件）：
 
 ```java
 @PostMapping("/notify/callback")

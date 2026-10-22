@@ -9,15 +9,17 @@ tag:
 
 ## 本章节演示Ruoyi-vue框架对接MDP
 
-本章节采用Ruoyi-vue的3.9.2版本对接MDP的1.5.0版本，对接完成之后的代码已经上传到了对应的仓库 (切换到 tag 1.5.0)
+本章节采用Ruoyi-vue的3.9.2版本对接MDP的1.6.0版本，对接完成之后的代码已经上传到了对应的仓库 (**请切换到 tag 1.6.0**)
 
->  注意：1.5.0只是作者在写该文档时的版本，若后续出现新版本或版本不对应，只需要将 mdp 和 Ruo-Vue-sso项目的版本号修改一致或者拉取版本号一致的分支即可。
+>  注意：1.6.0只是作者在写该文档时的版本，若后续出现新版本或版本不对应，只需要将 mdp 和 Ruo-Vue-sso项目的版本号修改一致或者拉取版本号一致的分支即可。
 
 本文档涉及3个项目，需要拉取3个项目的代码
 
 - MDP 后端： https://gitee.com/henhen6/mddata
 
   单点登录服务端后端工程
+
+  > 若依客户端依赖 MDP 定制版 `sa-token-sso-client-starter`（`${mdp-sa-token.version}`）。该构件**未发布到公共 Maven 仓库**，需克隆本工程后在根目录执行 `mvn clean install` 本地编译安装（或 deploy 到您的私服）。
 
 - MDP 前端： https://gitee.com/henhen6/mdp-web-vben
 
@@ -388,8 +390,8 @@ tag:
        ### 以下信息 根据【应用管理】新建应用后系统生成的值自行调整 ###
        # 应用ID
        client: ruoyi-vue-sso
-       # 应用秘钥
-       secret-key: 0Tvtm2xrTWG7n2azkM4FPyHwS6c3NxjQjYKh
+       # 应用秘钥（此处为占位符，请替换为平台实际生成的 appSecret）
+       secret-key: {您的appSecret}
        
        ### 以下信息 根据你的部署环境酌情修改 ip和port ###
        # 单体版：boot-server 访问地址
@@ -712,7 +714,7 @@ Sa-token支持4种注销方式，本项目采用的是全端注销。
 
 2. 在应用端开发“通知地址”接口，用于接收事件推送。
 
-   回调方法超时时间是5分钟，若你的业务比较复杂，请先存储事件日志后立即返回，然后异步处理事件的业务逻辑。若在5分钟内，MDP没有接收到返回，视为超时，会在之后的 **2m,5m,30m,6h,12h**发起重试，5次重试后就会停止重试。
+   平台推送的 HTTP 超时默认 5 秒（`mdp.notify.timeout`），若你的业务比较复杂，请先存储事件日志后立即返回，然后异步处理事件的业务逻辑。超时未返回视为失败，同一任务最多投递 5 次（首次 + 4 次重试），重试间隔依次 **2m、5m、30m、6h**，之后停止重试。
 
    - 验签与解密：平台推送使用 `notifyToken`（SHA1 签名校验令牌）+ `notifyEncodingAesKey`（AES 消息加解密秘钥），`mdp-sdk-core` 的 `MdpBizMsgCrypt` 已封装全部逻辑，推荐加密类型选择**安全模式**；
 
