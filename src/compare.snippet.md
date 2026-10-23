@@ -47,12 +47,13 @@
 - [x] 开源版所有功能
 - [x] 后端框架（开发者中心）全部源码，面向第三方与接入方的能力开放门户
 - [x] 前端框架（用户中心、管理中心、开发者中心）全部源码
+- [x] 小程序端源码（基于unibest开发）
 - [x] 主数据维护、广播
 - [x] 接口、数据、字段权限精细化控制
 - [x] 支持商用，不限项目数量、域名数量、无license、不含加密jar。
 - [x] 微信互助群
 
-<button class="buyBtn" onclick="window.open('/buy/')">购买</button>
+<button class="buyBtn" onclick="window.open('/buy/立即购买')">购买</button>
 </div>
 </div>
 
