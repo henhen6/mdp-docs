@@ -51,7 +51,9 @@ export default sidebar({
           collapsible: COLLAPSIBLE,
           children: [
             "单体版启动",
-            "微服务版启动"
+            "微服务版启动",
+            "开放平台",
+            "定时任务"
           ],
         },
         "前端启动",
