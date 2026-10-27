@@ -16,7 +16,7 @@ Thumbs.db
 # NPM
 package-lock.json
 node_modules
-pnpm-lock.yaml
+# 注意：pnpm-lock.yaml 需要提交到仓库（GitHub Actions 依赖锁定与缓存依赖它）
 
 # YARN
 yarn.lock
