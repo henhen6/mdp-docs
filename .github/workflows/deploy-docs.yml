@@ -1,0 +1,57 @@
+name: 发布文档到服务器
+
+# 触发条件：
+#   1. 推送到 dev 分支，且本次推送的最后一个提交信息包含「发布」二字
+#   2. 手动触发（Actions 页面 → Run workflow，跳过提交信息校验，便于调试）
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    # github.event.head_commit 是本次推送的最新提交；
+    # 若要「本次推送中任意一个提交包含 发布 即触发」，把条件换成 shell 遍历 github.event.commits
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || contains(github.event.head_commit.message, '发布')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.11.2
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 构建文档
+        run: pnpm docs:build
+        # 产物目录：src/.vuepress/dist
+
+      - name: 配置 SSH 私钥
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+      - name: 记录服务器主机指纹
+        # 自动信任首次连接的主机指纹；对安全性要求高时，改为预置 known_hosts（见仓库 Secrets 说明）
+        run: ssh-keyscan -p ${{ secrets.SERVER_PORT }} -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: 增量同步到服务器指定目录
+        # --delete：使目标目录与构建产物完全一致（删除目标目录中多余的文件），DEPLOY_DIR 必须是文档专属目录
+        run: |
+          rsync -avz --delete -e "ssh -p ${{ secrets.SERVER_PORT }}" \
+            src/.vuepress/dist/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_DIR }}/
