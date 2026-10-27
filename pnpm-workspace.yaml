@@ -1,0 +1,6 @@
+# pnpm 12 的依赖构建审查：strictDepBuilds 默认为 true，未明确表态的构建脚本会让安装直接失败
+# （ERR_PNPM_IGNORED_BUILDS）。以下两个包的原生二进制由各平台 optionalDependencies 分发，
+# postinstall 仅做校验/兜底，不执行也可正常工作，显式拒绝即视为「已审查」：
+allowBuilds:
+  '@parcel/watcher': false
+  esbuild: false
