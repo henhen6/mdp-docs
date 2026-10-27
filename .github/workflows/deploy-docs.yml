@@ -16,6 +16,9 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch'
       || contains(github.event.head_commit.message, '发布')
+    # Secrets 配置在 Environment（production）中，必须声明环境才能读到；
+    # 若您的环境名不是 production，改这里或改 GitHub Settings → Environments 中的名称保持一致
+    environment: 华为服务器
     runs-on: ubuntu-latest
 
     steps:
