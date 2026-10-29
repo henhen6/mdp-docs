@@ -35,7 +35,7 @@ features:
 
   - title: 丰富的功能
     icon: code-box-fill
-    details: 单点登录中心、开放平台、管理后台。
+    details: 单点登录中心、开放平台、管理后台。 WEB端、小程序端 多端支持。
     
 
 copyright: false
