@@ -165,15 +165,14 @@ export default hopeTheme({
     notice: [
       {
         path: "/",
-        title: "2026.10.1推出 v1.6.0",
+        title: "2026.10.23推出 v1.7.0",
         content:
             '<ul>' +
-            '<li>1. 用户体系与组织权限重构</li>' +
-            '<li>2. 数据权限（按单位、部门、个人、自定义规则）</li>'+
-            '<li>3. 接口权限 配置、授权、鉴权全链路打通（资源关联接口）</li>'+
-            '<li>4. 字段权限（支持隐藏和脱敏）</li>'+
-            '<li>5. 统计大屏按组织统计数据</li>'+
-            '<li>6. OAuth2认证登录功能完善，提供完善的客户端实例代码</li>'+
+            '<li>1. 开发者支持自主申请接口权限</li>' +
+            '<li>2. 开放接口支持在线调试</li>'+
+            '<li>3. 内部接口文档由knife4j转为NextDoc4j </li>'+
+            '<li>4. 开发者能自主查看回调日志和事件推送日志</li>'+
+            '<li>5. 新增移动端</li>'+
             '</ul><div class="addthis_inline_follow_toolbox_qssu"></div>',
         actions: [
           {
